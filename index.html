@@ -1,110 +1,318 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard สรุปผลการปฏิบัติงาน</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; }
-    .sidebar { width: 260px; height: 100vh; position: fixed; background: #ffffff; box-shadow: 2px 0 10px rgba(0,0,0,0.05); padding: 20px; z-index: 1000; }
-    .main-content { margin-left: 260px; padding: 40px; }
-    .nav-item { padding: 15px; margin-bottom: 10px; cursor: pointer; border-radius: 10px; transition: 0.3s; color: #64748b; }
-    .nav-item:hover, .nav-item.active { background: #e0e7ff; color: #4f46e5; font-weight: bold; }
-    .stat-card { border-radius: 15px; padding: 25px; color: white; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
-    .bg-jobs { background: linear-gradient(45deg, #0d6efd, #0dcaf0); }
-    .bg-evals { background: linear-gradient(45deg, #6f42c1, #d63384); }
-    .bg-sat { background: linear-gradient(45deg, #198754, #20c997); }
-    .bg-perf { background: linear-gradient(45deg, #fd7e14, #ffc107); }
-    .stat-val { font-size: 2rem; font-weight: bold; margin-top: 5px; }
-    .card { border-radius: 15px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; padding: 20px; } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard สรุปผลการปฏิบัติงาน</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f4f7f6;
+        }
+
+        .sidebar {
+            width: 260px;
+            height: 100vh;
+            position: fixed;
+            background: #ffffff;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 40px;
+        }
+
+        .nav-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: 0.3s;
+            color: #64748b;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            background: #e0e7ff;
+            color: #4f46e5;
+            font-weight: bold;
+        }
+
+        .stat-card {
+            border-radius: 15px;
+            padding: 25px;
+            color: white;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .bg-jobs {
+            background: linear-gradient(45deg, #0d6efd, #0dcaf0);
+        }
+
+        .bg-evals {
+            background: linear-gradient(45deg, #6f42c1, #d63384);
+        }
+
+        .bg-sat {
+            background: linear-gradient(45deg, #198754, #20c997);
+        }
+
+        .bg-perf {
+            background: linear-gradient(45deg, #fd7e14, #ffc107);
+        }
+
+        .stat-val {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .card {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+        }
+    </style>
 </head>
+
 <body>
-  <div class="sidebar">
-    <h5 class="fw-bold mb-4 text-center">เมนูรายงาน</h5>
-    <div class="nav-item active" onclick="showPage('stats', this)"><i class="fas fa-chart-pie me-2"></i> สถิติภาพรวม</div>
-    <div class="nav-item" onclick="showPage('charts', this)"><i class="fas fa-chart-line me-2"></i> กราฟแนวโน้ม</div>
-    <div class="nav-item" onclick="showPage('graphs', this)"><i class="fas fa-chart-bar me-2"></i> แผนภูมิงาน</div>
-  </div>
-
-  <div class="main-content">
-    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
-      <h3 id="pageTitle" class="fw-bold"><i class="fas fa-chart-pie me-2"></i> สถิติภาพรวม</h3>
-      <div class="d-flex gap-2">
-        <input type="date" id="dateStart" class="form-control">
-        <input type="date" id="dateEnd" class="form-control">
-        <button class="btn btn-primary px-4" onclick="fetchData()">ดึงข้อมูล</button>
-      </div>
+    <div class="sidebar">
+        <h5 class="fw-bold mb-4 text-center">เมนูรายงาน</h5>
+        <div class="nav-item active" onclick="showPage('stats', this)"><i class="fas fa-chart-pie me-2"></i> สถิติภาพรวม
+        </div>
+        <div class="nav-item" onclick="showPage('charts', this)"><i class="fas fa-chart-line me-2"></i> กราฟแนวโน้ม
+        </div>
+        <div class="nav-item" onclick="showPage('graphs', this)"><i class="fas fa-chart-bar me-2"></i> แผนภูมิงาน</div>
     </div>
 
-    <div id="page-stats" class="dashboard-page">
-      <div class="row g-4 mb-4">
-        <div class="col-md-3"><div class="stat-card bg-jobs"><div>จำนวนงานซ่อม</div><div class="stat-val" id="v1">0</div></div></div>
-        <div class="col-md-3"><div class="stat-card bg-evals"><div>ผู้ตอบประเมิน</div><div class="stat-val" id="v2">0</div></div></div>
-        <div class="col-md-3"><div class="stat-card bg-sat"><div>คะแนนพึงพอใจ</div><div class="stat-val" id="v3">0.0</div></div></div>
-        <div class="col-md-3"><div class="stat-card bg-perf"><div>คะแนนปฏิบัติงาน</div><div class="stat-val" id="v4">0.0</div></div></div>
-      </div>
-      <div class="card p-4">
-        <h5 class="mb-3 fw-bold"><i class="fas fa-comments me-2"></i> ข้อเสนอแนะล่าสุด</h5>
-        <ul class="list-group list-group-flush" id="commentList"></ul>
-      </div>
+    <div class="main-content">
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <h3 id="pageTitle" class="fw-bold"><i class="fas fa-chart-pie me-2"></i> สถิติภาพรวม</h3>
+            <div class="d-flex gap-2 align-items-center">
+                <span class="text-muted small">เลือกช่วงเวลา:</span>
+                <input type="date" id="dateStart" class="form-control" title="วันที่เริ่มต้น">
+                <span class="text-muted">-</span>
+                <input type="date" id="dateEnd" class="form-control" title="วันที่สิ้นสุด">
+                <button class="btn btn-primary px-4 fw-bold" onclick="fetchData()">
+                    <i class="fas fa-sync-alt me-1"></i> ดึงข้อมูล
+                </button>
+            </div>
+        </div>
+
+        <div id="page-stats" class="dashboard-page">
+            <div class="row g-4 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card bg-jobs">
+                        <div class="opacity-75">จำนวนงานซ่อม</div>
+                        <div class="stat-val" id="v1">...</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-evals">
+                        <div class="opacity-75">ผู้ตอบประเมิน</div>
+                        <div class="stat-val" id="v2">...</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-sat">
+                        <div class="opacity-75">คะแนนพึงพอใจ</div>
+                        <div class="stat-val" id="v3">...</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-perf">
+                        <div class="opacity-75">คะแนนปฏิบัติงาน</div>
+                        <div class="stat-val" id="v4">...</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-4">
+                <h5 class="mb-3 fw-bold"><i class="fas fa-comments me-2 text-primary"></i> ข้อเสนอแนะล่าสุด (10 รายการ)
+                </h5>
+                <ul class="list-group list-group-flush" id="commentList">
+                    <li class="list-group-item text-muted text-center py-4">กำลังโหลดข้อเสนอแนะ...</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="page-charts" class="dashboard-page d-none">
+            <div class="card p-4"><canvas id="lineChart" height="80"></canvas></div>
+        </div>
+
+        <div id="page-graphs" class="dashboard-page d-none">
+            <div class="card p-4"><canvas id="barChart" height="80"></canvas></div>
+        </div>
     </div>
 
-    <div id="page-charts" class="dashboard-page d-none">
-      <div class="card p-4"><canvas id="lineChart" height="80"></canvas></div>
-    </div>
+    <script>
+        function showPage(id, el) {
+            document.querySelectorAll('.dashboard-page').forEach(p => p.classList.add('d-none'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById('page-' + id).classList.remove('d-none');
+            el.classList.add('active');
+            const icons = { 'stats': 'fa-chart-pie', 'charts': 'fa-chart-line', 'graphs': 'fa-chart-bar' };
+            document.getElementById('pageTitle').innerHTML = `<i class="fas ${icons[id]} me-2"></i> ${el.innerText}`;
+        }
 
-    <div id="page-graphs" class="dashboard-page d-none">
-      <div class="card p-4"><canvas id="barChart" height="80"></canvas></div>
-    </div>
-  </div>
+        const urlWorksRecords = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pub?gid=0&single=true&output=csv';
+        const urlEvaluations = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pub?gid=162882890&single=true&output=csv';
 
-  <script>
-    function showPage(id, el) {
-      document.querySelectorAll('.dashboard-page').forEach(p => p.classList.add('d-none'));
-      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-      document.getElementById('page-' + id).classList.remove('d-none');
-      el.classList.add('active');
-      const icons = {'stats':'fa-chart-pie', 'charts':'fa-chart-line', 'graphs':'fa-chart-bar'};
-      document.getElementById('pageTitle').innerHTML = `<i class="fas ${icons[id]} me-2"></i> ${el.innerText}`;
-    }
+        function parseCSVLine(line) {
+            return line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => cell.replace(/^"|"$/g, '').trim());
+        }
 
-    async function fetchData() {
-      const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pubhtml';
-      
-      try {
-        const response = await fetch(csvUrl);
-        const text = await response.text();
-        const rows = text.split('\n').map(row => row.replace(/"/g, '').split(',')); 
-        
-        const start = document.getElementById('dateStart').value;
-        const end = document.getElementById('dateEnd').value;
-        
-        const filtered = rows.slice(1).filter(row => {
-           const rowDate = row[0]; 
-           if (!start || !end) return true;
-           return rowDate >= start && rowDate <= end;
-        });
+        function parseDateString(dateStr) {
+            if (!dateStr) return null;
+            let mainParts = dateStr.split(',');
+            let datePart = mainParts[0].trim();
+            let timePart = mainParts.length > 1 ? mainParts[1].trim() : "00:00:00";
 
-        document.getElementById('v1').innerText = filtered.length;
-        alert("โหลดข้อมูลสำเร็จ จำนวนงานในช่วงนี้: " + filtered.length);
-        
-      } catch (err) {
-        console.error(err);
-        alert("เกิดข้อผิดพลาดในการดึงข้อมูล โปรดตรวจสอบการตั้งค่า Publish to web");
-      }
-    }
+            let dParts = datePart.split('/');
+            if (dParts.length === 3) {
+                let day = parseInt(dParts[0], 10);
+                let month = parseInt(dParts[1], 10) - 1; 
+                let year = parseInt(dParts[2], 10);
 
-    window.onload = () => {
-      fetchData();
-      new Chart(document.getElementById('lineChart'), { type: 'line', data: { labels: ['ม.ค.', 'ก.พ.', 'มี.ค.'], datasets: [{ label: 'จำนวนงาน', data: [12, 19, 3], borderColor: '#4f46e5', tension: 0.4 }] } });
-      new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['Hardware', 'Software', 'Network'], datasets: [{ label: 'ประเภทงาน', data: [60, 30, 10], backgroundColor: ['#0d6efd', '#6f42c1', '#198754'] }] } });
-    };
-  </script>
+                let tParts = timePart.split(':');
+                let hr = tParts.length > 0 ? parseInt(tParts[0], 10) : 0;
+                let min = tParts.length > 1 ? parseInt(tParts[1], 10) : 0;
+                let sec = tParts.length > 2 ? parseInt(tParts[2], 10) : 0;
+
+                return new Date(year, month, day, hr, min, sec);
+            }
+            return new Date(dateStr);
+        }
+
+        async function fetchData() {
+            try {
+                document.getElementById('v1').innerText = '...';
+                document.getElementById('v2').innerText = '...';
+                document.getElementById('v3').innerText = '...';
+                document.getElementById('v4').innerText = '...';
+
+                const startInput = document.getElementById('dateStart').value;
+                const endInput = document.getElementById('dateEnd').value;
+
+                let startDate = null;
+                if (startInput) {
+                    let [y, m, d] = startInput.split('-');
+                    startDate = new Date(y, m - 1, d, 0, 0, 0); 
+                }
+
+                let endDate = null;
+                if (endInput) {
+                    let [y, m, d] = endInput.split('-');
+                    endDate = new Date(y, m - 1, d, 23, 59, 59, 999); 
+                }
+
+                function isWithinDate(rowDateStr) {
+                    if (!startDate && !endDate) return true;
+                    const rowDate = parseDateString(rowDateStr);
+                    if (!rowDate || isNaN(rowDate)) return false;
+                    if (startDate && rowDate < startDate) return false;
+                    if (endDate && rowDate > endDate) return false;
+                    return true;
+                }
+
+
+                const resJobs = await fetch(urlWorksRecords);
+                const textJobs = await resJobs.text();
+                const rowsJobsRaw = textJobs.trim().split('\n');
+
+                let totalJobs = 0;
+                let validJobNumbers = new Set(); 
+
+                for (let i = 1; i < rowsJobsRaw.length; i++) {
+                    let row = parseCSVLine(rowsJobsRaw[i]);
+                    if (row.length > 1) {
+                        let rowDate = row[0]; 
+                        let jobNumber = row[1]; 
+
+                        if (isWithinDate(rowDate)) {
+                            totalJobs++;
+                            if (jobNumber) {
+                                validJobNumbers.add(jobNumber.trim()); 
+                            }
+                        }
+                    }
+                }
+
+                const resEval = await fetch(urlEvaluations);
+                const textEval = await resEval.text();
+                const rowsEvalRaw = textEval.trim().split('\n');
+
+                let sumSat = 0, sumPerf = 0, count = 0;
+                let comments = [];
+
+                for (let i = 1; i < rowsEvalRaw.length; i++) {
+                    let row = parseCSVLine(rowsEvalRaw[i]);
+
+                    if (row.length >= 5) {
+                        let evalJobNumber = row[1] ? row[1].trim() : ""; 
+
+                        if (validJobNumbers.has(evalJobNumber)) {
+                            let sat = parseFloat(row[3]);  
+                            let perf = parseFloat(row[4]); 
+                            let comment = row[5] || "";    
+
+                            if (!isNaN(sat) || !isNaN(perf)) {
+                                count++;
+                                if (!isNaN(sat)) sumSat += sat;
+                                if (!isNaN(perf)) sumPerf += perf;
+                            }
+
+                            if (comment.trim() !== "") {
+                                comments.unshift(`[${evalJobNumber}] ${comment}`);
+                            }
+                        }
+                    }
+                }
+
+
+                document.getElementById('v1').innerText = totalJobs;
+                document.getElementById('v2').innerText = count;
+                document.getElementById('v3').innerText = (count > 0 ? (sumSat / count).toFixed(1) : "0.0");
+                document.getElementById('v4').innerText = (count > 0 ? (sumPerf / count).toFixed(1) : "0.0");
+
+                let commentHtml = '';
+                comments.slice(0, 10).forEach(c => {
+                    commentHtml += `<li class="list-group-item py-3"><i class="fas fa-quote-left text-muted me-2"></i> ${c}</li>`;
+                });
+                document.getElementById('commentList').innerHTML = commentHtml || '<li class="list-group-item text-muted text-center py-4">ยังไม่มีข้อเสนอแนะในช่วงเวลานี้</li>';
+
+            } catch (err) {
+                console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", err);
+                alert("ไม่สามารถดึงข้อมูลได้ โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหรือลิงก์ Sheet");
+            }
+        }
+
+        window.onload = () => {
+            fetchData();
+
+            new Chart(document.getElementById('lineChart'), { type: 'line', data: { labels: ['ม.ค.', 'ก.พ.', 'มี.ค.'], datasets: [{ label: 'จำนวนงาน', data: [12, 19, 3], borderColor: '#4f46e5', tension: 0.4 }] } });
+            new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['Hardware', 'Software', 'Network'], datasets: [{ label: 'ประเภทงาน', data: [60, 30, 10], backgroundColor: ['#0d6efd', '#6f42c1', '#198754'] }] } });
+        };
+    </script>
 </body>
+
 </html>
