@@ -75,26 +75,22 @@
     }
 
     async function fetchData() {
-      // 1. URL ของไฟล์ CSV ที่ Publish จาก Google Sheets
       const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pubhtml';
       
       try {
         const response = await fetch(csvUrl);
         const text = await response.text();
-        const rows = text.split('\n').map(row => row.replace(/"/g, '').split(',')); // ตัด quote และแยก comma
+        const rows = text.split('\n').map(row => row.replace(/"/g, '').split(',')); 
         
-        // กรองข้อมูลตามช่วงวันที่ (สมมติว่า column 0 คือวันที่ - ปรับเปลี่ยนตาม index จริงของ Google Sheets)
         const start = document.getElementById('dateStart').value;
         const end = document.getElementById('dateEnd').value;
         
-        // ดึงเฉพาะแถวที่มีข้อมูลและอยู่ในช่วงวันที่
         const filtered = rows.slice(1).filter(row => {
            const rowDate = row[0]; // ปรับ index ให้ตรงกับ Column วันที่
            if (!start || !end) return true;
            return rowDate >= start && rowDate <= end;
         });
 
-        // อัปเดต UI
         document.getElementById('v1').innerText = filtered.length;
         alert("โหลดข้อมูลสำเร็จ จำนวนงานในช่วงนี้: " + filtered.length);
         
