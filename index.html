@@ -101,6 +101,7 @@
     }
 
     window.onload = () => {
+      fetchData();
       new Chart(document.getElementById('lineChart'), { type: 'line', data: { labels: ['ม.ค.', 'ก.พ.', 'มี.ค.'], datasets: [{ label: 'จำนวนงาน', data: [12, 19, 3], borderColor: '#4f46e5', tension: 0.4 }] } });
       new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['Hardware', 'Software', 'Network'], datasets: [{ label: 'ประเภทงาน', data: [60, 30, 10], backgroundColor: ['#0d6efd', '#6f42c1', '#198754'] }] } });
     };
