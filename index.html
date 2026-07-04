@@ -86,7 +86,7 @@
         const end = document.getElementById('dateEnd').value;
         
         const filtered = rows.slice(1).filter(row => {
-           const rowDate = row[0]; // ปรับ index ให้ตรงกับ Column วันที่
+           const rowDate = row[0]; 
            if (!start || !end) return true;
            return rowDate >= start && rowDate <= end;
         });
