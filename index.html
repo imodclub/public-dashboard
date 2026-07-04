@@ -4,37 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard สรุปผลการปฏิบัติงาน</title>
-  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
-  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
   <style>
     body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; }
     .sidebar { width: 260px; height: 100vh; position: fixed; background: #ffffff; box-shadow: 2px 0 10px rgba(0,0,0,0.05); padding: 20px; z-index: 1000; }
     .main-content { margin-left: 260px; padding: 40px; }
     .nav-item { padding: 15px; margin-bottom: 10px; cursor: pointer; border-radius: 10px; transition: 0.3s; color: #64748b; }
     .nav-item:hover, .nav-item.active { background: #e0e7ff; color: #4f46e5; font-weight: bold; }
-    
     .stat-card { border-radius: 15px; padding: 25px; color: white; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
     .bg-jobs { background: linear-gradient(45deg, #0d6efd, #0dcaf0); }
     .bg-evals { background: linear-gradient(45deg, #6f42c1, #d63384); }
     .bg-sat { background: linear-gradient(45deg, #198754, #20c997); }
     .bg-perf { background: linear-gradient(45deg, #fd7e14, #ffc107); }
     .stat-val { font-size: 2rem; font-weight: bold; margin-top: 5px; }
-    
     .card { border-radius: 15px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    
     @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; padding: 20px; } }
   </style>
 </head>
 <body>
-
-  <!-- Sidebar -->
   <div class="sidebar">
     <h5 class="fw-bold mb-4 text-center">เมนูรายงาน</h5>
     <div class="nav-item active" onclick="showPage('stats', this)"><i class="fas fa-chart-pie me-2"></i> สถิติภาพรวม</div>
@@ -42,7 +32,6 @@
     <div class="nav-item" onclick="showPage('graphs', this)"><i class="fas fa-chart-bar me-2"></i> แผนภูมิงาน</div>
   </div>
 
-  <!-- Main Content -->
   <div class="main-content">
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
       <h3 id="pageTitle" class="fw-bold"><i class="fas fa-chart-pie me-2"></i> สถิติภาพรวม</h3>
@@ -53,7 +42,6 @@
       </div>
     </div>
 
-    <!-- Page 1: Stats -->
     <div id="page-stats" class="dashboard-page">
       <div class="row g-4 mb-4">
         <div class="col-md-3"><div class="stat-card bg-jobs"><div>จำนวนงานซ่อม</div><div class="stat-val" id="v1">0</div></div></div>
@@ -62,17 +50,15 @@
         <div class="col-md-3"><div class="stat-card bg-perf"><div>คะแนนปฏิบัติงาน</div><div class="stat-val" id="v4">0.0</div></div></div>
       </div>
       <div class="card p-4">
-        <h5 class="mb-3 fw-bold"><i class="fas fa-comments me-2"></i> 10 ข้อเสนอแนะล่าสุด</h5>
+        <h5 class="mb-3 fw-bold"><i class="fas fa-comments me-2"></i> ข้อเสนอแนะล่าสุด</h5>
         <ul class="list-group list-group-flush" id="commentList"></ul>
       </div>
     </div>
 
-    <!-- Page 2: Charts -->
     <div id="page-charts" class="dashboard-page d-none">
       <div class="card p-4"><canvas id="lineChart" height="80"></canvas></div>
     </div>
 
-    <!-- Page 3: Graphs -->
     <div id="page-graphs" class="dashboard-page d-none">
       <div class="card p-4"><canvas id="barChart" height="80"></canvas></div>
     </div>
@@ -88,15 +74,37 @@
       document.getElementById('pageTitle').innerHTML = `<i class="fas ${icons[id]} me-2"></i> ${el.innerText}`;
     }
 
-    // ฟังก์ชันนี้ให้คุณกมลใช้ fetch() ดึงข้อมูลจาก CSV หรือ API ที่คุณกมลเตรียมไว้ในอนาคต
-    function fetchData() {
-      alert("เชื่อมต่อ API/CSV ที่นี่ เพื่อดึงข้อมูลตามช่วงวันที่ Start: " + document.getElementById('dateStart').value);
-      // ตัวอย่างการอัปเดตค่าเมื่อดึงข้อมูลเสร็จ
-      document.getElementById('v1').innerText = "250"; 
+    async function fetchData() {
+      // 1. URL ของไฟล์ CSV ที่ Publish จาก Google Sheets
+      const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pubhtml';
+      
+      try {
+        const response = await fetch(csvUrl);
+        const text = await response.text();
+        const rows = text.split('\n').map(row => row.replace(/"/g, '').split(',')); // ตัด quote และแยก comma
+        
+        // กรองข้อมูลตามช่วงวันที่ (สมมติว่า column 0 คือวันที่ - ปรับเปลี่ยนตาม index จริงของ Google Sheets)
+        const start = document.getElementById('dateStart').value;
+        const end = document.getElementById('dateEnd').value;
+        
+        // ดึงเฉพาะแถวที่มีข้อมูลและอยู่ในช่วงวันที่
+        const filtered = rows.slice(1).filter(row => {
+           const rowDate = row[0]; // ปรับ index ให้ตรงกับ Column วันที่
+           if (!start || !end) return true;
+           return rowDate >= start && rowDate <= end;
+        });
+
+        // อัปเดต UI
+        document.getElementById('v1').innerText = filtered.length;
+        alert("โหลดข้อมูลสำเร็จ จำนวนงานในช่วงนี้: " + filtered.length);
+        
+      } catch (err) {
+        console.error(err);
+        alert("เกิดข้อผิดพลาดในการดึงข้อมูล โปรดตรวจสอบการตั้งค่า Publish to web");
+      }
     }
 
     window.onload = () => {
-      // Initialize Charts
       new Chart(document.getElementById('lineChart'), { type: 'line', data: { labels: ['ม.ค.', 'ก.พ.', 'มี.ค.'], datasets: [{ label: 'จำนวนงาน', data: [12, 19, 3], borderColor: '#4f46e5', tension: 0.4 }] } });
       new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['Hardware', 'Software', 'Network'], datasets: [{ label: 'ประเภทงาน', data: [60, 30, 10], backgroundColor: ['#0d6efd', '#6f42c1', '#198754'] }] } });
     };
