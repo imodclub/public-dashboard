@@ -2,57 +2,104 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard สรุปผลการปฏิบัติงาน</title>
+  <!-- Bootstrap 5 -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
-    body { background: #0f172a; color: white; font-family: 'Sarabun', sans-serif; }
-    .stat-card { border-radius: 20px; padding: 25px; color: white; box-shadow: 0 10px 15px rgba(0,0,0,0.3); }
-    .bg-jobs { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-    .bg-evals { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
-    .bg-sat { background: linear-gradient(135deg, #10b981, #059669); }
-    .bg-perf { background: linear-gradient(135deg, #f59e0b, #d97706); }
-    .card-glass { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 25px; }
+    body { font-family: 'Sarabun', sans-serif; background-color: #f4f7f6; }
+    .sidebar { width: 260px; height: 100vh; position: fixed; background: #ffffff; box-shadow: 2px 0 10px rgba(0,0,0,0.05); padding: 20px; z-index: 1000; }
+    .main-content { margin-left: 260px; padding: 40px; }
+    .nav-item { padding: 15px; margin-bottom: 10px; cursor: pointer; border-radius: 10px; transition: 0.3s; color: #64748b; }
+    .nav-item:hover, .nav-item.active { background: #e0e7ff; color: #4f46e5; font-weight: bold; }
+    
+    .stat-card { border-radius: 15px; padding: 25px; color: white; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+    .bg-jobs { background: linear-gradient(45deg, #0d6efd, #0dcaf0); }
+    .bg-evals { background: linear-gradient(45deg, #6f42c1, #d63384); }
+    .bg-sat { background: linear-gradient(45deg, #198754, #20c997); }
+    .bg-perf { background: linear-gradient(45deg, #fd7e14, #ffc107); }
+    .stat-val { font-size: 2rem; font-weight: bold; margin-top: 5px; }
+    
+    .card { border-radius: 15px; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    
+    @media (max-width: 768px) { .sidebar { display: none; } .main-content { margin-left: 0; padding: 20px; } }
   </style>
 </head>
 <body>
-  <div class="container py-5">
-    <h2 class="mb-4">📊 Dashboard สรุปผลการปฏิบัติงาน</h2>
-    
-    <!-- ตัวเลือกวันที่ -->
-    <div class="card-glass mb-4">
-      <div class="row align-items-center">
-        <div class="col-md-4"><label>จากวันที่:</label><input type="date" id="startDate" class="form-control bg-dark text-white border-0"></div>
-        <div class="col-md-4"><label>ถึงวันที่:</label><input type="date" id="endDate" class="form-control bg-dark text-white border-0"></div>
-        <div class="col-md-4"><button class="btn btn-primary w-100 mt-4" onclick="fetchData()">โหลดข้อมูล</button></div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <h5 class="fw-bold mb-4 text-center">เมนูรายงาน</h5>
+    <div class="nav-item active" onclick="showPage('stats', this)"><i class="fas fa-chart-pie me-2"></i> สถิติภาพรวม</div>
+    <div class="nav-item" onclick="showPage('charts', this)"><i class="fas fa-chart-line me-2"></i> กราฟแนวโน้ม</div>
+    <div class="nav-item" onclick="showPage('graphs', this)"><i class="fas fa-chart-bar me-2"></i> แผนภูมิงาน</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <h3 id="pageTitle" class="fw-bold"><i class="fas fa-chart-pie me-2"></i> สถิติภาพรวม</h3>
+      <div class="d-flex gap-2">
+        <input type="date" id="dateStart" class="form-control">
+        <input type="date" id="dateEnd" class="form-control">
+        <button class="btn btn-primary px-4" onclick="fetchData()">ดึงข้อมูล</button>
       </div>
     </div>
 
-    <!-- ส่วนแสดงสถิติ -->
-    <div class="row g-4 mb-4">
-      <div class="col-md-3"><div class="stat-card bg-jobs"><div>งานซ่อม</div><h2 id="val-jobs">0</h2></div></div>
-      <div class="col-md-3"><div class="stat-card bg-evals"><div>ผู้ตอบประเมิน</div><h2 id="val-evals">0</h2></div></div>
-      <div class="col-md-3"><div class="stat-card bg-sat"><div>พึงพอใจ</div><h2 id="val-sat">0.0</h2></div></div>
-      <div class="col-md-3"><div class="stat-card bg-perf"><div>ปฏิบัติงาน</div><h2 id="val-perf">0.0</h2></div></div>
+    <!-- Page 1: Stats -->
+    <div id="page-stats" class="dashboard-page">
+      <div class="row g-4 mb-4">
+        <div class="col-md-3"><div class="stat-card bg-jobs"><div>จำนวนงานซ่อม</div><div class="stat-val" id="v1">0</div></div></div>
+        <div class="col-md-3"><div class="stat-card bg-evals"><div>ผู้ตอบประเมิน</div><div class="stat-val" id="v2">0</div></div></div>
+        <div class="col-md-3"><div class="stat-card bg-sat"><div>คะแนนพึงพอใจ</div><div class="stat-val" id="v3">0.0</div></div></div>
+        <div class="col-md-3"><div class="stat-card bg-perf"><div>คะแนนปฏิบัติงาน</div><div class="stat-val" id="v4">0.0</div></div></div>
+      </div>
+      <div class="card p-4">
+        <h5 class="mb-3 fw-bold"><i class="fas fa-comments me-2"></i> 10 ข้อเสนอแนะล่าสุด</h5>
+        <ul class="list-group list-group-flush" id="commentList"></ul>
+      </div>
+    </div>
+
+    <!-- Page 2: Charts -->
+    <div id="page-charts" class="dashboard-page d-none">
+      <div class="card p-4"><canvas id="lineChart" height="80"></canvas></div>
+    </div>
+
+    <!-- Page 3: Graphs -->
+    <div id="page-graphs" class="dashboard-page d-none">
+      <div class="card p-4"><canvas id="barChart" height="80"></canvas></div>
     </div>
   </div>
 
   <script>
-    // ใส่ URL ของ Web App จาก Google Apps Script ที่นี่
-    const WEB_APP_URL = "https://script.google.com/macros/s/XXXXX_YOUR_WEB_APP_URL_XXXXX/exec";
-
-    function fetchData() {
-      const start = document.getElementById('startDate').value;
-      const end = document.getElementById('endDate').value;
-      
-      fetch(`${WEB_APP_URL}?action=getData&start=${start}&end=${end}`)
-        .then(response => response.json())
-        .then(data => {
-          document.getElementById('val-jobs').innerText = data.totalJobs;
-          document.getElementById('val-evals').innerText = data.totalEvals;
-          document.getElementById('val-sat').innerText = data.avgSat;
-          document.getElementById('val-perf').innerText = data.avgPerf;
-        });
+    function showPage(id, el) {
+      document.querySelectorAll('.dashboard-page').forEach(p => p.classList.add('d-none'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + id).classList.remove('d-none');
+      el.classList.add('active');
+      const icons = {'stats':'fa-chart-pie', 'charts':'fa-chart-line', 'graphs':'fa-chart-bar'};
+      document.getElementById('pageTitle').innerHTML = `<i class="fas ${icons[id]} me-2"></i> ${el.innerText}`;
     }
+
+    // ฟังก์ชันนี้ให้คุณกมลใช้ fetch() ดึงข้อมูลจาก CSV หรือ API ที่คุณกมลเตรียมไว้ในอนาคต
+    function fetchData() {
+      alert("เชื่อมต่อ API/CSV ที่นี่ เพื่อดึงข้อมูลตามช่วงวันที่ Start: " + document.getElementById('dateStart').value);
+      // ตัวอย่างการอัปเดตค่าเมื่อดึงข้อมูลเสร็จ
+      document.getElementById('v1').innerText = "250"; 
+    }
+
+    window.onload = () => {
+      // Initialize Charts
+      new Chart(document.getElementById('lineChart'), { type: 'line', data: { labels: ['ม.ค.', 'ก.พ.', 'มี.ค.'], datasets: [{ label: 'จำนวนงาน', data: [12, 19, 3], borderColor: '#4f46e5', tension: 0.4 }] } });
+      new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['Hardware', 'Software', 'Network'], datasets: [{ label: 'ประเภทงาน', data: [60, 30, 10], backgroundColor: ['#0d6efd', '#6f42c1', '#198754'] }] } });
+    };
   </script>
 </body>
 </html>
