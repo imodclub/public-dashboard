@@ -360,6 +360,7 @@
                         scales: {
                             x: { title: { display: true, text: 'วัน/เดือน' } }, // 🟢 แกนนอน
                             y: {
+                                beginAtZero: true,
                                 title: { display: true, text: 'จำนวนงานซ่อม' }, // 🟢 แกนแนวตั้ง
                                 ticks: { precision: 0 } // 🟢 ตัดทศนิยมออก (บังคับให้เป็นจำนวนเต็ม)
                             }
@@ -383,6 +384,7 @@
                     },
                     options: {
                         scales: {
+                            beginAtZero: true,
                             y: { ticks: { precision: 0 } } // 🟢 ตัดทศนิยมออก
                         }
                     }
