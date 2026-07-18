@@ -165,6 +165,8 @@
     </div>
 
     <script>
+        let lineChartInstance = null;
+        let barChartInstance = null;
         function showPage(id, el) {
             document.querySelectorAll('.dashboard-page').forEach(p => p.classList.add('d-none'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -209,6 +211,7 @@
                 document.getElementById('v2').innerText = '...';
                 document.getElementById('v3').innerText = '...';
                 document.getElementById('v4').innerText = '...';
+                
 
                 const startInput = document.getElementById('dateStart').value;
                 const endInput = document.getElementById('dateEnd').value;
@@ -299,18 +302,96 @@
                     commentHtml += `<li class="list-group-item py-3"><i class="fas fa-quote-left text-muted me-2"></i> ${c}</li>`;
                 });
                 document.getElementById('commentList').innerHTML = commentHtml || '<li class="list-group-item text-muted text-center py-4">ยังไม่มีข้อเสนอแนะในช่วงเวลานี้</li>';
-
+                updateCharts(rowsJobsRaw, startDate, endDate);
             } catch (err) {
                 console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", err);
                 alert("ไม่สามารถดึงข้อมูลได้ โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหรือลิงก์ Sheet");
             }
         }
 
+        function updateCharts(rows, start, end) {
+                const dailyCounts = {};
+                const catCounts = { 'Hardware': 0, 'Software': 0, 'Network': 0, 'อื่นๆ': 0 };
+
+                // 1. ประมวลผลข้อมูล
+                for (let i = 1; i < rows.length; i++) {
+                    let row = parseCSVLine(rows[i]);
+                    if (row.length < 5) continue;
+
+                    let d = parseDateString(row[0]);
+                    if (!d || isNaN(d.getTime()) || (start && d < start) || (end && d > end)) continue;
+
+                    let yy = d.getFullYear();
+                    let mm = String(d.getMonth() + 1).padStart(2, '0');
+                    let dd = String(d.getDate()).padStart(2, '0');
+                    let dateKey = `${yy}-${mm}-${dd}`;
+
+                    dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
+
+                    let cat = row[4] || 'อื่นๆ';
+                    catCounts[cat] = (catCounts[cat] || 0) + 1;
+                }
+
+                const sortedLabels = Object.keys(dailyCounts).sort();
+                const displayLabels = sortedLabels.map(dateKey => {
+                    let [y, m, d] = dateKey.split('-');
+                    return `${d}/${m}`;
+                });
+                const sortedData = sortedLabels.map(key => dailyCounts[key]);
+
+                if (lineChartInstance) lineChartInstance.destroy();
+                if (barChartInstance) barChartInstance.destroy();
+
+                // 4. วาด Line Chart พร้อมการปรับแต่งความโค้งและแกน
+                lineChartInstance = new Chart(document.getElementById('lineChart'), {
+                    type: 'line',
+                    data: {
+                        labels: displayLabels,
+                        datasets: [{
+                            label: 'จำนวนงานซ่อม',
+                            data: sortedData,
+                            borderColor: '#4f46e5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            tension: 0.4, // 🟢 เพิ่มความโค้งของเส้น
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            x: { title: { display: true, text: 'วัน/เดือน' } }, // 🟢 แกนนอน
+                            y: {
+                                title: { display: true, text: 'จำนวนงานซ่อม' }, // 🟢 แกนแนวตั้ง
+                                ticks: { precision: 0 } // 🟢 ตัดทศนิยมออก (บังคับให้เป็นจำนวนเต็ม)
+                            }
+                        },
+                        plugins: {
+                            tooltip: { callbacks: { title: (items) => `วันที่: ${items[0].label}` } }
+                        }
+                    }
+                });
+
+                // 5. วาด Bar Chart
+                barChartInstance = new Chart(document.getElementById('barChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(catCounts),
+                        datasets: [{
+                            label: 'จำนวนงานแยกตามประเภท',
+                            data: Object.values(catCounts),
+                            backgroundColor: ['#0d6efd', '#6f42c1', '#198754', '#ffc107']
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: { ticks: { precision: 0 } } // 🟢 ตัดทศนิยมออก
+                        }
+                    }
+                });
+            }
+        
+
         window.onload = () => {
             fetchData();
-
-            new Chart(document.getElementById('lineChart'), { type: 'line', data: { labels: ['ม.ค.', 'ก.พ.', 'มี.ค.'], datasets: [{ label: 'จำนวนงาน', data: [12, 19, 3], borderColor: '#4f46e5', tension: 0.4 }] } });
-            new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: ['Hardware', 'Software', 'Network'], datasets: [{ label: 'ประเภทงาน', data: [60, 30, 10], backgroundColor: ['#0d6efd', '#6f42c1', '#198754'] }] } });
         };
     </script>
 </body>
