@@ -112,7 +112,7 @@
                 <input type="date" id="dateStart" class="form-control" title="วันที่เริ่มต้น">
                 <span class="text-muted">-</span>
                 <input type="date" id="dateEnd" class="form-control" title="วันที่สิ้นสุด">
-                <button class="btn btn-primary px-4 fw-bold" onclick="fetchData()">
+                <button class="btn btn-primary px-4 fw-bold" onclick="applyDateFilter()">
                     <i class="fas fa-sync-alt me-1"></i> ดึงข้อมูล
                 </button>
             </div>
@@ -165,8 +165,14 @@
     </div>
 
     <script>
+        let allJobsData = [];
+        let allEvalData = [];
         let lineChartInstance = null;
         let barChartInstance = null;
+
+        const urlWorksRecords = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pub?gid=0&single=true&output=csv';
+        const urlEvaluations = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pub?gid=162882890&single=true&output=csv';
+
         function showPage(id, el) {
             document.querySelectorAll('.dashboard-page').forEach(p => p.classList.add('d-none'));
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
@@ -176,224 +182,235 @@
             document.getElementById('pageTitle').innerHTML = `<i class="fas ${icons[id]} me-2"></i> ${el.innerText}`;
         }
 
-        const urlWorksRecords = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pub?gid=0&single=true&output=csv';
-        const urlEvaluations = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pub?gid=162882890&single=true&output=csv';
-
         function parseCSVLine(line) {
             return line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => cell.replace(/^"|"$/g, '').trim());
         }
 
         function parseDateString(dateStr) {
             if (!dateStr) return null;
-            let mainParts = dateStr.split(',');
-            let datePart = mainParts[0].trim();
-            let timePart = mainParts.length > 1 ? mainParts[1].trim() : "00:00:00";
+            dateStr = dateStr.toString().trim();
 
-            let dParts = datePart.split('/');
-            if (dParts.length === 3) {
-                let day = parseInt(dParts[0], 10);
-                let month = parseInt(dParts[1], 10) - 1; 
-                let year = parseInt(dParts[2], 10);
+            try {
+                let mainParts = dateStr.split(',');
+                let datePart = mainParts[0].trim();
+                let timePart = mainParts.length > 1 ? mainParts[1].trim() : "00:00:00";
 
-                let tParts = timePart.split(':');
-                let hr = tParts.length > 0 ? parseInt(tParts[0], 10) : 0;
-                let min = tParts.length > 1 ? parseInt(tParts[1], 10) : 0;
-                let sec = tParts.length > 2 ? parseInt(tParts[2], 10) : 0;
+                let dParts = datePart.split('/');
+                if (dParts.length === 3) {
+                    let day = parseInt(dParts[0], 10);
+                    let month = parseInt(dParts[1], 10) - 1;
+                    let year = parseInt(dParts[2], 10);
 
-                return new Date(year, month, day, hr, min, sec);
-            }
-            return new Date(dateStr);
+                    let tParts = timePart.split(':');
+                    let hr = tParts.length > 0 ? parseInt(tParts[0], 10) : 0;
+                    let min = tParts.length > 1 ? parseInt(tParts[1], 10) : 0;
+                    let sec = tParts.length > 2 ? parseInt(tParts[2], 10) : 0;
+
+                    let d = new Date(year, month, day, hr, min, sec);
+                    if (!isNaN(d.getTime())) return d;
+                }
+            } catch (e) { }
+
+            let fallbackDate = new Date(dateStr);
+            return isNaN(fallbackDate.getTime()) ? null : fallbackDate;
         }
 
-        async function fetchData() {
+        async function fetchInitialData() {
             try {
-                document.getElementById('v1').innerText = '...';
-                document.getElementById('v2').innerText = '...';
-                document.getElementById('v3').innerText = '...';
-                document.getElementById('v4').innerText = '...';
-                
-
-                const startInput = document.getElementById('dateStart').value;
-                const endInput = document.getElementById('dateEnd').value;
-
-                let startDate = null;
-                if (startInput) {
-                    let [y, m, d] = startInput.split('-');
-                    startDate = new Date(y, m - 1, d, 0, 0, 0); 
-                }
-
-                let endDate = null;
-                if (endInput) {
-                    let [y, m, d] = endInput.split('-');
-                    endDate = new Date(y, m - 1, d, 23, 59, 59, 999); 
-                }
-
-                function isWithinDate(rowDateStr) {
-                    if (!startDate && !endDate) return true;
-                    const rowDate = parseDateString(rowDateStr);
-                    if (!rowDate || isNaN(rowDate)) return false;
-                    if (startDate && rowDate < startDate) return false;
-                    if (endDate && rowDate > endDate) return false;
-                    return true;
-                }
-
-
                 const resJobs = await fetch(urlWorksRecords);
                 const textJobs = await resJobs.text();
-                const rowsJobsRaw = textJobs.trim().split('\n');
-
-                let totalJobs = 0;
-                let validJobNumbers = new Set(); 
-
-                for (let i = 1; i < rowsJobsRaw.length; i++) {
-                    let row = parseCSVLine(rowsJobsRaw[i]);
-                    if (row.length > 1) {
-                        let rowDate = row[0]; 
-                        let jobNumber = row[1]; 
-
-                        if (isWithinDate(rowDate)) {
-                            totalJobs++;
-                            if (jobNumber) {
-                                validJobNumbers.add(jobNumber.trim()); 
-                            }
-                        }
-                    }
-                }
+                allJobsData = textJobs.trim().split('\n').map(parseCSVLine);
 
                 const resEval = await fetch(urlEvaluations);
                 const textEval = await resEval.text();
-                const rowsEvalRaw = textEval.trim().split('\n');
+                allEvalData = textEval.trim().split('\n').map(parseCSVLine);
 
-                let sumSat = 0, sumPerf = 0, count = 0;
-                let comments = [];
-
-                for (let i = 1; i < rowsEvalRaw.length; i++) {
-                    let row = parseCSVLine(rowsEvalRaw[i]);
-
-                    if (row.length >= 5) {
-                        let evalJobNumber = row[1] ? row[1].trim() : ""; 
-
-                        if (validJobNumbers.has(evalJobNumber)) {
-                            let sat = parseFloat(row[3]);  
-                            let perf = parseFloat(row[4]); 
-                            let comment = row[5] || "";    
-
-                            if (!isNaN(sat) || !isNaN(perf)) {
-                                count++;
-                                if (!isNaN(sat)) sumSat += sat;
-                                if (!isNaN(perf)) sumPerf += perf;
-                            }
-
-                            if (comment.trim() !== "") {
-                                comments.unshift(`[${evalJobNumber}] ${comment}`);
-                            }
-                        }
-                    }
-                }
-
-
-                document.getElementById('v1').innerText = totalJobs;
-                document.getElementById('v2').innerText = count;
-                document.getElementById('v3').innerText = (count > 0 ? (sumSat / count).toFixed(1) : "0.0");
-                document.getElementById('v4').innerText = (count > 0 ? (sumPerf / count).toFixed(1) : "0.0");
-
-                let commentHtml = '';
-                comments.slice(0, 10).forEach(c => {
-                    commentHtml += `<li class="list-group-item py-3"><i class="fas fa-quote-left text-muted me-2"></i> ${c}</li>`;
-                });
-                document.getElementById('commentList').innerHTML = commentHtml || '<li class="list-group-item text-muted text-center py-4">ยังไม่มีข้อเสนอแนะในช่วงเวลานี้</li>';
-                updateCharts(rowsJobsRaw, startDate, endDate);
+                applyDateFilter();
             } catch (err) {
-                console.error("เกิดข้อผิดพลาดในการดึงข้อมูล:", err);
                 alert("ไม่สามารถดึงข้อมูลได้ โปรดตรวจสอบการเชื่อมต่ออินเทอร์เน็ตหรือลิงก์ Sheet");
             }
         }
 
-        function updateCharts(rows, start, end) {
-                const dailyCounts = {};
-                const catCounts = {};
+        function applyDateFilter() {
+            const startInput = document.getElementById('dateStart').value;
+            const endInput = document.getElementById('dateEnd').value;
 
-                // 1. ประมวลผลข้อมูล
-                for (let i = 1; i < rows.length; i++) {
-                    let row = parseCSVLine(rows[i]);
-                    if (row.length < 5) continue;
-
-                    let d = parseDateString(row[0]);
-                    if (!d || isNaN(d.getTime()) || (start && d < start) || (end && d > end)) continue;
-
-                    let yy = d.getFullYear();
-                    let mm = String(d.getMonth() + 1).padStart(2, '0');
-                    let dd = String(d.getDate()).padStart(2, '0');
-                    let dateKey = `${yy}-${mm}-${dd}`;
-
-                    dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
-
-                    let cat = row[4] || 'อื่นๆ';
-                    catCounts[cat] = (catCounts[cat] || 0) + 1;
-                }
-
-                const sortedLabels = Object.keys(dailyCounts).sort();
-                const displayLabels = sortedLabels.map(dateKey => {
-                    let [y, m, d] = dateKey.split('-');
-                    return `${d}/${m}`;
-                });
-                const sortedData = sortedLabels.map(key => dailyCounts[key]);
-
-                if (lineChartInstance) lineChartInstance.destroy();
-                if (barChartInstance) barChartInstance.destroy();
-
-                // 4. วาด Line Chart พร้อมการปรับแต่งความโค้งและแกน
-                lineChartInstance = new Chart(document.getElementById('lineChart'), {
-                    type: 'line',
-                    data: {
-                        labels: displayLabels,
-                        datasets: [{
-                            label: 'จำนวนงานซ่อม',
-                            data: sortedData,
-                            borderColor: '#4f46e5',
-                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                            tension: 0.4, // 🟢 เพิ่มความโค้งของเส้น
-                            fill: true
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: { title: { display: true, text: 'วัน/เดือน' } }, // 🟢 แกนนอน
-                            y: {
-                                beginAtZero: true,
-                                title: { display: true, text: 'จำนวนงานซ่อม' }, // 🟢 แกนแนวตั้ง
-                                ticks: { precision: 0 } // 🟢 ตัดทศนิยมออก (บังคับให้เป็นจำนวนเต็ม)
-                            }
-                        },
-                        plugins: {
-                            tooltip: { callbacks: { title: (items) => `วันที่: ${items[0].label}` } }
-                        }
-                    }
-                });
-
-                // 5. วาด Bar Chart
-                barChartInstance = new Chart(document.getElementById('barChart'), {
-                    type: 'bar',
-                    data: {
-                        labels: Object.keys(catCounts),
-                        datasets: [{
-                            label: 'จำนวนงานแยกตามประเภท',
-                            data: Object.values(catCounts),
-                            backgroundColor: ['#0d6efd', '#6f42c1', '#198754', '#ffc107']
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            beginAtZero: true,
-                            y: { ticks: { precision: 0 } } // 🟢 ตัดทศนิยมออก
-                        }
-                    }
-                });
+            let startDate = null;
+            if (startInput) {
+                let [y, m, d] = startInput.split('-');
+                startDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), 0, 0, 0);
             }
-        
+
+            let endDate = null;
+            if (endInput) {
+                let [y, m, d] = endInput.split('-');
+                endDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), 23, 59, 59, 999);
+            }
+
+            let filteredJobRows = [];
+            let validJobNumbers = new Set();
+
+            for (let i = 1; i < allJobsData.length; i++) {
+                let row = allJobsData[i];
+                if (row.length > 1) {
+                    let rowDateStr = row[0];
+                    let jobNumber = row[1];
+                    let rowDate = parseDateString(rowDateStr);
+
+                    let isValidDate = false;
+                    if (rowDate && !isNaN(rowDate.getTime())) {
+                        let rTime = rowDate.getTime();
+                        isValidDate = true;
+                        if (startDate && rTime < startDate.getTime()) isValidDate = false;
+                        if (endDate && rTime > endDate.getTime()) isValidDate = false;
+                    }
+
+                    if (isValidDate) {
+                        filteredJobRows.push(row);
+                        if (jobNumber) {
+                            validJobNumbers.add(jobNumber.trim());
+                        }
+                    }
+                }
+            }
+
+            updateStatsSummary(filteredJobRows, validJobNumbers);
+            updateLineChart(filteredJobRows);
+            updateBarChart(filteredJobRows);
+        }
+
+        function updateStatsSummary(filteredRows, validJobNumbers) {
+            let totalJobs = filteredRows.length;
+            let sumSat = 0, sumPerf = 0, count = 0;
+            let comments = [];
+
+            for (let i = 1; i < allEvalData.length; i++) {
+                let row = allEvalData[i];
+                if (row.length >= 5) {
+                    let evalJobNumber = row[1] ? row[1].trim() : "";
+                    if (validJobNumbers.has(evalJobNumber)) {
+                        let sat = parseFloat(row[3]);
+                        let perf = parseFloat(row[4]);
+                        let comment = row[5] || "";
+
+                        if (!isNaN(sat) || !isNaN(perf)) {
+                            count++;
+                            if (!isNaN(sat)) sumSat += sat;
+                            if (!isNaN(perf)) sumPerf += perf;
+                        }
+                        if (comment.trim() !== "") {
+                            comments.unshift(`[${evalJobNumber}] ${comment}`);
+                        }
+                    }
+                }
+            }
+
+            document.getElementById('v1').innerText = totalJobs;
+            document.getElementById('v2').innerText = count;
+            document.getElementById('v3').innerText = (count > 0 ? (sumSat / count).toFixed(1) : "0.0");
+            document.getElementById('v4').innerText = (count > 0 ? (sumPerf / count).toFixed(1) : "0.0");
+
+            let commentHtml = '';
+            comments.slice(0, 10).forEach(c => {
+                commentHtml += `<li class="list-group-item py-3"><i class="fas fa-quote-left text-muted me-2"></i> ${c}</li>`;
+            });
+            document.getElementById('commentList').innerHTML = commentHtml || '<li class="list-group-item text-muted text-center py-4">ยังไม่มีข้อเสนอแนะในช่วงเวลานี้</li>';
+        }
+
+        function updateLineChart(filteredRows) {
+            const dailyCounts = {};
+
+            for (let i = 0; i < filteredRows.length; i++) {
+                let row = filteredRows[i];
+                let d = parseDateString(row[0]);
+                if (!d || isNaN(d.getTime())) continue;
+
+                let yy = d.getFullYear();
+                let mm = String(d.getMonth() + 1).padStart(2, '0');
+                let dd = String(d.getDate()).padStart(2, '0');
+                let dateKey = `${yy}-${mm}-${dd}`;
+
+                dailyCounts[dateKey] = (dailyCounts[dateKey] || 0) + 1;
+            }
+
+            const sortedLabels = Object.keys(dailyCounts).sort();
+            const displayLabels = sortedLabels.map(dateKey => {
+                let [y, m, d] = dateKey.split('-');
+                return `${d}/${m}`;
+            });
+            const sortedData = sortedLabels.map(key => dailyCounts[key]);
+
+            if (lineChartInstance) lineChartInstance.destroy();
+
+            lineChartInstance = new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: {
+                    labels: displayLabels,
+                    datasets: [{
+                        label: 'จำนวนงานซ่อม',
+                        data: sortedData,
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: { title: { display: true, text: 'วัน/เดือน' } },
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'จำนวนงานซ่อม' },
+                            ticks: { precision: 0 }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                title: (items) => `วันที่: ${items[0].label}`,
+                                label: (context) => ` จำนวนงานซ่อม: ${context.parsed.y} งาน`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateBarChart(filteredRows) {
+            const catCounts = {};
+
+            for (let i = 0; i < filteredRows.length; i++) {
+                let row = filteredRows[i];
+                let cat = row[4];
+                if (!cat || cat.trim() === '') continue;
+                catCounts[cat] = (catCounts[cat] || 0) + 1;
+            }
+
+            if (barChartInstance) barChartInstance.destroy();
+
+            barChartInstance = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(catCounts),
+                    datasets: [{
+                        label: 'จำนวนงานแยกตามประเภท',
+                        data: Object.values(catCounts),
+                        backgroundColor: ['#0d6efd', '#6f42c1', '#198754', '#ffc107', '#fd7e14', '#0dcaf0']
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { precision: 0 }
+                        }
+                    }
+                }
+            });
+        }
 
         window.onload = () => {
-            fetchData();
+            fetchInitialData();
         };
     </script>
 </body>
