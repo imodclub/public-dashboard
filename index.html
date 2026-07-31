@@ -232,90 +232,111 @@
         }
 
         function applyDateFilter() {
-            const startInput = document.getElementById('dateStart').value;
-            const endInput = document.getElementById('dateEnd').value;
+                const startInput = document.getElementById('dateStart').value;
+                const endInput = document.getElementById('dateEnd').value;
 
-            let startDate = null;
-            if (startInput) {
-                let [y, m, d] = startInput.split('-');
-                startDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), 0, 0, 0);
-            }
+                let startDate = null;
+                if (startInput) {
+                    let [y, m, d] = startInput.split('-');
+                    startDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), 0, 0, 0);
+                }
 
-            let endDate = null;
-            if (endInput) {
-                let [y, m, d] = endInput.split('-');
-                endDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), 23, 59, 59, 999);
-            }
+                let endDate = null;
+                if (endInput) {
+                    let [y, m, d] = endInput.split('-');
+                    endDate = new Date(parseInt(y, 10), parseInt(m, 10) - 1, parseInt(d, 10), 23, 59, 59, 999);
+                }
 
-            let filteredJobRows = [];
-            let validJobNumbers = new Set();
+                let filteredJobRows = [];
 
-            for (let i = 1; i < allJobsData.length; i++) {
-                let row = allJobsData[i];
-                if (row.length > 1) {
-                    let rowDateStr = row[0];
-                    let jobNumber = row[1];
-                    let rowDate = parseDateString(rowDateStr);
+                for (let i = 1; i < allJobsData.length; i++) {
+                    let row = allJobsData[i];
+                    if (row.length > 1) {
+                        let rowDateStr = row[0];
+                        let rowDate = parseDateString(rowDateStr);
 
-                    let isValidDate = false;
-                    if (rowDate && !isNaN(rowDate.getTime())) {
-                        let rTime = rowDate.getTime();
-                        isValidDate = true;
-                        if (startDate && rTime < startDate.getTime()) isValidDate = false;
-                        if (endDate && rTime > endDate.getTime()) isValidDate = false;
-                    }
+                        let isValidDate = false;
+                        if (rowDate && !isNaN(rowDate.getTime())) {
+                            let rTime = rowDate.getTime();
+                            isValidDate = true;
+                            if (startDate && rTime < startDate.getTime()) isValidDate = false;
+                            if (endDate && rTime > endDate.getTime()) isValidDate = false;
+                        }
 
-                    if (isValidDate) {
-                        filteredJobRows.push(row);
-                        if (jobNumber) {
-                            validJobNumbers.add(jobNumber.trim());
+                        if (isValidDate) {
+                            filteredJobRows.push(row);
                         }
                     }
                 }
+
+                // ส่ง startDate และ endDate ไปกรองข้อมูลประเมินตามวันเวลาแทนรหัสงาน
+                updateStatsSummary(filteredJobRows, startDate, endDate);
+                updateLineChart(filteredJobRows);
+                updateBarChart(filteredJobRows);
             }
 
-            updateStatsSummary(filteredJobRows, validJobNumbers);
-            updateLineChart(filteredJobRows);
-            updateBarChart(filteredJobRows);
-        }
+        function updateStatsSummary(filteredRows, startDate, endDate) {
+                let totalJobs = filteredRows.length;
+                let sumSat = 0, sumPerf = 0, count = 0;
+                let comments = [];
 
-        function updateStatsSummary(filteredRows, validJobNumbers) {
-            let totalJobs = filteredRows.length;
-            let sumSat = 0, sumPerf = 0, count = 0;
-            let comments = [];
+                // วนลูปอ่านข้อมูลแบบประเมิน
+                for (let i = 1; i < allEvalData.length; i++) {
+                    let row = allEvalData[i];
+                    if (row.length >= 5) {
+                        let rowDateStr = row[0]; // คอลัมน์ Timestamp ของหน้าประเมิน
+                        let rowDate = parseDateString(rowDateStr);
 
-            for (let i = 1; i < allEvalData.length; i++) {
-                let row = allEvalData[i];
-                if (row.length >= 5) {
-                    let evalJobNumber = row[1] ? row[1].trim() : "";
-                    if (validJobNumbers.has(evalJobNumber)) {
-                        let sat = parseFloat(row[3]);
-                        let perf = parseFloat(row[4]);
-                        let comment = row[5] || "";
-
-                        if (!isNaN(sat) || !isNaN(perf)) {
-                            count++;
-                            if (!isNaN(sat)) sumSat += sat;
-                            if (!isNaN(perf)) sumPerf += perf;
+                        let isValidDate = false;
+                        // ตรวจสอบว่าวันที่ประเมินอยู่ในช่วงเวลาที่ค้นหาหรือไม่
+                        if (rowDate && !isNaN(rowDate.getTime())) {
+                            let rTime = rowDate.getTime();
+                            isValidDate = true;
+                            if (startDate && rTime < startDate.getTime()) isValidDate = false;
+                            if (endDate && rTime > endDate.getTime()) isValidDate = false;
                         }
-                        if (comment.trim() !== "") {
-                            comments.unshift(`[${evalJobNumber}] ${comment}`);
+
+                        // ถ้าระยะเวลาประเมินถูกต้อง ให้นับคะแนนทันที (ไม่สนใจว่าจะมีรหัสงานตรงกันหรือไม่)
+                        if (isValidDate) {
+                            let sat = parseFloat(row[3]);
+                            let perf = parseFloat(row[4]);
+                            let comment = row[5] || "";
+
+                            if (!isNaN(sat) || !isNaN(perf)) {
+                                count++;
+                                if (!isNaN(sat)) sumSat += sat;
+                                if (!isNaN(perf)) sumPerf += perf;
+                            }
+
+                            if (comment.trim() !== "") {
+                                // ดึงวันที่แปลงเป็นรูปแบบไทยเพื่อไปแสดงใต้คอมเมนต์
+                                let dateStr = rowDate.toLocaleDateString('th-TH');
+                                comments.unshift({
+                                    text: comment.trim(),
+                                    date: dateStr
+                                });
+                            }
                         }
                     }
                 }
+
+                document.getElementById('v1').innerText = totalJobs;
+                document.getElementById('v2').innerText = count;
+                // ปรับทศนิยมให้เป็น 2 ตำแหน่ง (เช่น 5.00) ให้เหมือนระบบเก่า
+                document.getElementById('v3').innerText = (count > 0 ? (sumSat / count).toFixed(2) : "0.00");
+                document.getElementById('v4').innerText = (count > 0 ? (sumPerf / count).toFixed(2) : "0.00");
+
+                // แสดงข้อเสนอแนะ และเพิ่มรูปแบบวันที่ให้เหมือน AppScript
+                let commentHtml = '';
+                if (comments.length === 0) {
+                    commentHtml = '<li class="list-group-item text-muted text-center py-4">ไม่มีข้อเสนอแนะ</li>';
+                } else {
+                    comments.slice(0, 10).forEach(c => {
+                        commentHtml += `<li class="list-group-item py-3"><div class="fw-bold text-dark">" ${c.text} "</div><small class="text-muted">เมื่อ ${c.date}</small></li>`;
+                    });
+                }
+                document.getElementById('commentList').innerHTML = commentHtml;
             }
-
-            document.getElementById('v1').innerText = totalJobs;
-            document.getElementById('v2').innerText = count;
-            document.getElementById('v3').innerText = (count > 0 ? (sumSat / count).toFixed(1) : "0.0");
-            document.getElementById('v4').innerText = (count > 0 ? (sumPerf / count).toFixed(1) : "0.0");
-
-            let commentHtml = '';
-            comments.slice(0, 10).forEach(c => {
-                commentHtml += `<li class="list-group-item py-3"><i class="fas fa-quote-left text-muted me-2"></i> ${c}</li>`;
-            });
-            document.getElementById('commentList').innerHTML = commentHtml || '<li class="list-group-item text-muted text-center py-4">ยังไม่มีข้อเสนอแนะในช่วงเวลานี้</li>';
-        }
 
         function updateLineChart(filteredRows) {
                 const dailyCounts = {};
