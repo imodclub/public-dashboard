@@ -1,107 +1,341 @@
-
 <!DOCTYPE html>
 <html lang="th">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard สรุปผลการปฏิบัติงาน</title>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Dashboard ระบบงานซ่อมบำรุง IT</title>
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: #f4f7f6;
+        * {
+            box-sizing: border-box;
         }
 
+        body {
+            margin: 0;
+            font-family: 'Sarabun', sans-serif;
+            background: #f5f7fa;
+            color: #333;
+        }
+
+        /* =========================
+       SIDEBAR
+    ========================= */
+
         .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 260px;
             height: 100vh;
-            position: fixed;
-            background: #ffffff;
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
-            padding: 20px;
-            z-index: 1000;
+            background: #212529;
+            color: white;
+            z-index: 1050;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
         }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-header i {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-header h5 {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .sidebar-header small {
+            color: #adb5bd;
+        }
+
+        .sidebar-menu {
+            padding: 15px 0;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            color: #ced4da;
+            text-decoration: none;
+            padding: 13px 22px;
+            transition: all 0.2s;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background: #343a40;
+            color: white;
+        }
+
+        .sidebar-menu i {
+            width: 25px;
+            text-align: center;
+            margin-right: 8px;
+        }
+
+        /* =========================
+       MAIN
+    ========================= */
 
         .main-content {
             margin-left: 260px;
-            padding: 40px;
+            min-height: 100vh;
+            padding: 25px;
+            transition: margin-left 0.3s ease;
         }
 
-        .nav-item {
-            padding: 15px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            border-radius: 10px;
-            transition: 0.3s;
-            color: #64748b;
+        /* =========================
+       MOBILE
+    ========================= */
+
+        .mobile-header {
+            display: none;
+            background: #212529;
+            color: white;
+            padding: 12px 15px;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .nav-item:hover,
-        .nav-item.active {
-            background: #e0e7ff;
-            color: #4f46e5;
-            font-weight: bold;
+        .mobile-header button {
+            border: none;
+            background: transparent;
+            color: white;
+            font-size: 24px;
         }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1040;
+        }
+
+        /* =========================
+       PAGE HEADER
+    ========================= */
+
+        .page-title {
+            margin-bottom: 20px;
+        }
+
+        .page-title h3 {
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+
+        .page-title small {
+            color: #6c757d;
+        }
+
+        /* =========================
+       FILTER
+    ========================= */
+
+        .filter-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .filter-card label {
+            font-weight: 500;
+            margin-bottom: 5px;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* =========================
+       STAT CARDS
+    ========================= */
 
         .stat-card {
-            border-radius: 15px;
-            padding: 25px;
-            color: white;
-            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            height: 100%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
-        .bg-jobs {
-            background: linear-gradient(45deg, #0d6efd, #0dcaf0);
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 12px;
         }
 
-        .bg-evals {
-            background: linear-gradient(45deg, #6f42c1, #d63384);
+        .stat-title {
+            color: #6c757d;
+            font-size: 15px;
         }
 
-        .bg-sat {
-            background: linear-gradient(45deg, #198754, #20c997);
+        .stat-value {
+            font-size: 30px;
+            font-weight: 600;
+            line-height: 1.2;
         }
 
-        .bg-perf {
-            background: linear-gradient(45deg, #fd7e14, #ffc107);
+        /* =========================
+       CONTENT CARD
+    ========================= */
+
+        .content-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
         }
 
-        .stat-val {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-top: 5px;
+        .content-card h5 {
+            font-weight: 600;
+            margin-bottom: 18px;
         }
 
-        .card {
-            border-radius: 15px;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        /* =========================
+       COMMENTS
+    ========================= */
+
+        .comment-item {
+            border-bottom: 1px solid #eee;
+            padding: 15px 0;
         }
+
+        .comment-item:last-child {
+            border-bottom: none;
+        }
+
+        .comment-date {
+            color: #6c757d;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .comment-type {
+            color: #198754;
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .comment-text {
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* =========================
+       CHART
+    ========================= */
 
         .chart-container {
             position: relative;
             width: 100%;
-            height: 500px;
+            height: 400px;
         }
 
-        @media (max-width: 768px) {
+        /* =========================
+       LOADING
+    ========================= */
+
+        #loading {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.85);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        #loading .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        /* =========================
+       RESPONSIVE
+    ========================= */
+
+        @media (max-width: 991px) {
+
+            .mobile-header {
+                display: flex;
+            }
+
             .sidebar {
-                display: none;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .sidebar-overlay.show {
+                display: block;
             }
 
             .main-content {
                 margin-left: 0;
-                padding: 20px;
+                padding: 15px;
             }
 
             .chart-container {
-                height: 400px;
+                height: 350px;
+            }
+        }
+
+        @media (max-width: 575px) {
+
+            .page-title h3 {
+                font-size: 22px;
+            }
+
+            .stat-value {
+                font-size: 26px;
+            }
+
+            .filter-buttons {
+                margin-top: 10px;
+            }
+
+            .filter-buttons button {
+                flex: 1;
+            }
+
+            .chart-container {
+                height: 300px;
             }
         }
     </style>
@@ -109,182 +343,351 @@
 
 <body>
 
-    <div class="sidebar">
-        <h5 class="fw-bold mb-4 text-center">เมนูรายงาน</h5>
+    <!-- =========================
+     MOBILE HEADER
+========================= -->
 
-        <div class="nav-item active" onclick="showPage('stats', this)">
-            <i class="fas fa-chart-pie me-2"></i>
-            สถิติภาพรวม
+    <div class="mobile-header">
+
+        <div>
+            <strong>
+                <i class="fa-solid fa-chart-line me-2"></i>
+                Dashboard
+            </strong>
         </div>
 
-        <div class="nav-item" onclick="showPage('charts', this)">
-            <i class="fas fa-chart-line me-2"></i>
-            กราฟแนวโน้ม
-        </div>
+        <button onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
-        <div class="nav-item" onclick="showPage('graphs', this)">
-            <i class="fas fa-chart-bar me-2"></i>
-            แผนภูมิงาน
-        </div>
     </div>
 
-    <div class="main-content">
 
-        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <!-- =========================
+     SIDEBAR
+========================= -->
 
-            <h3 id="pageTitle" class="fw-bold">
-                <i class="fas fa-chart-pie me-2"></i>
-                สถิติภาพรวม
-            </h3>
+    <div id="sidebarOverlay" class="sidebar-overlay" onclick="closeSidebar()">
+    </div>
 
-            <div class="d-flex gap-2 align-items-center flex-wrap">
+    <aside id="sidebar" class="sidebar">
 
-                <span class="text-muted small">
-                    เลือกช่วงเวลา:
-                </span>
+        <div class="sidebar-header">
 
-                <input type="date" id="dateStart" class="form-control" title="วันที่เริ่มต้น">
+            <i class="fa-solid fa-screwdriver-wrench"></i>
 
-                <span class="text-muted">
-                    -
-                </span>
+            <h5>ระบบงานซ่อมบำรุง IT</h5>
 
-                <input type="date" id="dateEnd" class="form-control" title="วันที่สิ้นสุด">
+            <small>คณะวิทยาศาสตร์</small>
 
-                <button class="btn btn-primary px-4 fw-bold" onclick="applyDateFilter()">
-
-                    <i class="fas fa-sync-alt me-1"></i>
-                    ดึงข้อมูล
-
-                </button>
-
-            </div>
         </div>
 
-        <div id="page-stats" class="dashboard-page">
+        <div class="sidebar-menu">
+
+            <a href="#stats" class="active" onclick="showSection('stats', this)">
+
+                <i class="fa-solid fa-chart-pie"></i>
+                สถิติภาพรวม
+
+            </a>
+
+            <a href="#trend" onclick="showSection('trend', this)">
+
+                <i class="fa-solid fa-chart-line"></i>
+                กราฟแนวโน้ม
+
+            </a>
+
+            <a href="#category" onclick="showSection('category', this)">
+
+                <i class="fa-solid fa-chart-column"></i>
+                กราฟประเภทงาน
+
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =========================
+     MAIN
+========================= -->
+
+    <main class="main-content">
+
+        <div class="page-title">
+
+            <h3>
+                <i class="fa-solid fa-chart-line me-2"></i>
+                Dashboard ระบบงานซ่อมบำรุง IT
+            </h3>
+
+            <small>
+                สถิติและผลการปฏิบัติงานซ่อมบำรุง คณะวิทยาศาสตร์
+            </small>
+
+        </div>
+
+
+        <!-- =========================
+       DATE FILTER
+  ========================= -->
+
+        <div class="filter-card">
+
+            <div class="row align-items-end g-3">
+
+                <div class="col-md-4">
+
+                    <label for="dateStart">
+                        วันที่เริ่มต้น
+                    </label>
+
+                    <input type="date" id="dateStart" class="form-control">
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <label for="dateEnd">
+                        วันที่สิ้นสุด
+                    </label>
+
+                    <input type="date" id="dateEnd" class="form-control">
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="filter-buttons">
+
+                        <button type="button" class="btn btn-primary" onclick="applyDateFilter()">
+
+                            <i class="fa-solid fa-filter me-1"></i>
+                            ดึงข้อมูล
+
+                        </button>
+
+                        <button type="button" class="btn btn-outline-secondary" onclick="clearDateFilter()">
+
+                            <i class="fa-solid fa-rotate-left me-1"></i>
+                            Clear
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================
+       STATS
+  ========================= -->
+
+        <section id="stats" class="dashboard-section">
 
             <div class="row g-4 mb-4">
 
-                <div class="col-md-3">
-                    <div class="stat-card bg-jobs">
+                <div class="col-md-6 col-xl-3">
 
-                        <div class="opacity-75">
-                            จำนวนงานซ่อม
+                    <div class="stat-card">
+
+                        <div class="stat-icon bg-primary-subtle text-primary">
+
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+
                         </div>
 
-                        <div class="stat-val" id="v1">
-                            ...
+                        <div class="stat-title">
+                            งานซ่อมทั้งหมด
+                        </div>
+
+                        <div id="totalJobs" class="stat-value">
+
+                            0
+
                         </div>
 
                     </div>
+
                 </div>
 
-                <div class="col-md-3">
-                    <div class="stat-card bg-evals">
 
-                        <div class="opacity-75">
-                            ผู้ตอบประเมิน
+                <div class="col-md-6 col-xl-3">
+
+                    <div class="stat-card">
+
+                        <div class="stat-icon bg-success-subtle text-success">
+
+                            <i class="fa-solid fa-clipboard-check"></i>
+
                         </div>
 
-                        <div class="stat-val" id="v2">
-                            ...
+                        <div class="stat-title">
+                            จำนวนผู้ประเมิน
+                        </div>
+
+                        <div id="totalEvals" class="stat-value">
+
+                            0
+
                         </div>
 
                     </div>
+
                 </div>
 
-                <div class="col-md-3">
-                    <div class="stat-card bg-sat">
 
-                        <div class="opacity-75">
-                            คะแนนพึงพอใจ
+                <div class="col-md-6 col-xl-3">
+
+                    <div class="stat-card">
+
+                        <div class="stat-icon bg-warning-subtle text-warning">
+
+                            <i class="fa-solid fa-star"></i>
+
                         </div>
 
-                        <div class="stat-val" id="v3">
-                            ...
+                        <div class="stat-title">
+                            ความพึงพอใจเฉลี่ย
+                        </div>
+
+                        <div id="avgSat" class="stat-value">
+
+                            0.00
+
                         </div>
 
                     </div>
+
                 </div>
 
-                <div class="col-md-3">
-                    <div class="stat-card bg-perf">
 
-                        <div class="opacity-75">
-                            คะแนนปฏิบัติงาน
+                <div class="col-md-6 col-xl-3">
+
+                    <div class="stat-card">
+
+                        <div class="stat-icon bg-info-subtle text-info">
+
+                            <i class="fa-solid fa-chart-simple"></i>
+
                         </div>
 
-                        <div class="stat-val" id="v4">
-                            ...
+                        <div class="stat-title">
+                            ผลการปฏิบัติงานเฉลี่ย
+                        </div>
+
+                        <div id="avgPerf" class="stat-value">
+
+                            0.00
+
                         </div>
 
                     </div>
+
                 </div>
 
             </div>
 
-            <div class="card p-4">
 
-                <h5 class="mb-3 fw-bold">
-                    <i class="fas fa-comments me-2 text-primary"></i>
-                    ข้อเสนอแนะล่าสุด (10 รายการ)
+            <!-- COMMENTS -->
+
+            <div class="content-card">
+
+                <h5>
+                    <i class="fa-regular fa-comments me-2"></i>
+                    ข้อเสนอแนะล่าสุด (20 รายการ)
                 </h5>
 
-                <ul class="list-group list-group-flush" id="commentList">
+                <div id="commentsList">
 
-                    <li class="list-group-item text-muted text-center py-4">
-                        กำลังโหลดข้อเสนอแนะ...
-                    </li>
+                    <div class="text-muted">
+                        กำลังโหลดข้อมูล...
+                    </div>
 
-                </ul>
+                </div>
 
             </div>
 
-        </div>
+        </section>
 
-        <div id="page-charts" class="dashboard-page d-none">
 
-            <div class="card p-4">
+        <!-- =========================
+       TREND
+  ========================= -->
 
-                <h5 class="fw-bold mb-4">
-                    <i class="fas fa-chart-line me-2 text-primary"></i>
-                    แนวโน้มจำนวนงานตามวันที่ปฏิบัติงาน
+        <section id="trend" class="dashboard-section d-none">
+
+            <div class="content-card">
+
+                <h5>
+                    <i class="fa-solid fa-chart-line me-2"></i>
+                    กราฟแนวโน้มจำนวนงาน
                 </h5>
 
                 <div class="chart-container">
+
                     <canvas id="lineChart"></canvas>
+
                 </div>
 
             </div>
 
-        </div>
+        </section>
 
-        <div id="page-graphs" class="dashboard-page d-none">
 
-            <div class="card p-4">
+        <!-- =========================
+       CATEGORY
+  ========================= -->
 
-                <h5 class="fw-bold mb-4">
-                    <i class="fas fa-chart-bar me-2 text-primary"></i>
+        <section id="category" class="dashboard-section d-none">
+
+            <div class="content-card">
+
+                <h5>
+                    <i class="fa-solid fa-chart-column me-2"></i>
                     จำนวนงานแยกตามประเภท
                 </h5>
 
                 <div class="chart-container">
+
                     <canvas id="barChart"></canvas>
+
                 </div>
 
             </div>
 
+        </section>
+
+    </main>
+
+
+    <!-- =========================
+     LOADING
+========================= -->
+
+    <div id="loading">
+
+        <div class="spinner-border text-primary" role="status">
+        </div>
+
+        <div class="mt-3">
+            กำลังโหลดข้อมูล...
         </div>
 
     </div>
 
+
     <script>
 
-        let allJobsData = [];
-        let allEvalData = [];
-
-        let lineChartInstance = null;
-        let barChartInstance = null;
+        /* =====================================================
+           GOOGLE SHEETS CSV
+        ===================================================== */
 
         const urlWorksRecords =
             'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pub?gid=0&single=true&output=csv';
@@ -293,74 +696,89 @@
             'https://docs.google.com/spreadsheets/d/e/2PACX-1vRJfoAA1JNxDO5JMM-Zx6OkRlfVqTlqGjyfuGrMyIXmqPTSTCfGNLsOlO0nyEwY5oJr8JG18UGQT9Tv/pub?gid=162882890&single=true&output=csv';
 
 
-        function showPage(id, el) {
+        let allJobsData = [];
+        let allEvaluationsData = [];
+
+        let lineChartInstance = null;
+        let barChartInstance = null;
+
+
+        /* =====================================================
+           SIDEBAR
+        ===================================================== */
+
+        function toggleSidebar() {
 
             document
-                .querySelectorAll('.dashboard-page')
-                .forEach(page => page.classList.add('d-none'));
+                .getElementById('sidebar')
+                .classList.toggle('show');
 
             document
-                .querySelectorAll('.nav-item')
-                .forEach(item => item.classList.remove('active'));
+                .getElementById('sidebarOverlay')
+                .classList.toggle('show');
 
-            const target = document.getElementById('page-' + id);
-
-            if (target) {
-                target.classList.remove('d-none');
-            }
-
-            el.classList.add('active');
-
-            const icons = {
-                stats: 'fa-chart-pie',
-                charts: 'fa-chart-line',
-                graphs: 'fa-chart-bar'
-            };
-
-            document.getElementById('pageTitle').innerHTML =
-                `<i class="fas ${icons[id]} me-2"></i> ${el.innerText.trim()}`;
         }
 
 
-        function parseCSVLine(line) {
+        function closeSidebar() {
 
-            const result = [];
-            let current = '';
-            let insideQuotes = false;
+            document
+                .getElementById('sidebar')
+                .classList.remove('show');
 
-            for (let i = 0; i < line.length; i++) {
+            document
+                .getElementById('sidebarOverlay')
+                .classList.remove('show');
 
-                const char = line[i];
-
-                if (char === '"') {
-
-                    if (insideQuotes && line[i + 1] === '"') {
-                        current += '"';
-                        i++;
-                    } else {
-                        insideQuotes = !insideQuotes;
-                    }
-
-                } else if (char === ',' && !insideQuotes) {
-
-                    result.push(current.trim());
-                    current = '';
-
-                } else {
-
-                    current += char;
-                }
-            }
-
-            result.push(current.trim());
-
-            return result;
         }
 
+
+        /* =====================================================
+           SECTION
+        ===================================================== */
+
+        function showSection(sectionId, element) {
+
+            document
+                .querySelectorAll('.dashboard-section')
+                .forEach(section => {
+
+                    section.classList.add('d-none');
+
+                });
+
+            document
+                .getElementById(sectionId)
+                .classList.remove('d-none');
+
+
+            document
+                .querySelectorAll('.sidebar-menu a')
+                .forEach(a => {
+
+                    a.classList.remove('active');
+
+                });
+
+            if (element) {
+
+                element.classList.add('active');
+
+            }
+
+            closeSidebar();
+
+        }
+
+
+        /* =====================================================
+           CSV PARSER
+        ===================================================== */
 
         function parseCSV(text) {
 
             const rows = [];
+
             let row = [];
             let cell = '';
             let insideQuotes = false;
@@ -368,32 +786,37 @@
             for (let i = 0; i < text.length; i++) {
 
                 const char = text[i];
+                const next = text[i + 1];
 
                 if (char === '"') {
 
-                    if (insideQuotes && text[i + 1] === '"') {
+                    if (insideQuotes && next === '"') {
+
                         cell += '"';
                         i++;
+
                     } else {
+
                         insideQuotes = !insideQuotes;
+
                     }
 
                 } else if (char === ',' && !insideQuotes) {
 
-                    row.push(cell.trim());
+                    row.push(cell);
                     cell = '';
 
-                } else if ((char === '\n' || char === '\r') && !insideQuotes) {
+                } else if (
+                    (char === '\n' || char === '\r') &&
+                    !insideQuotes
+                ) {
 
-                    if (char === '\r' && text[i + 1] === '\n') {
+                    if (char === '\r' && next === '\n') {
                         i++;
                     }
 
-                    row.push(cell.trim());
-
-                    if (row.some(value => value !== '')) {
-                        rows.push(row);
-                    }
+                    row.push(cell);
+                    rows.push(row);
 
                     row = [];
                     cell = '';
@@ -401,47 +824,54 @@
                 } else {
 
                     cell += char;
+
                 }
+
             }
 
             if (cell !== '' || row.length > 0) {
 
-                row.push(cell.trim());
+                row.push(cell);
+                rows.push(row);
 
-                if (row.some(value => value !== '')) {
-                    rows.push(row);
-                }
             }
 
             return rows;
+
         }
 
 
+        /* =====================================================
+           DATE PARSER
+        ===================================================== */
+
         function parseDateString(value) {
 
-            if (!value) return null;
+            if (value === null || value === undefined) {
+                return null;
+            }
 
-            let dateStr = String(value)
+            let dateStr = value
+                .toString()
                 .replace(/\u00A0/g, ' ')
                 .trim();
 
-            if (!dateStr) return null;
+            if (!dateStr) {
+                return null;
+            }
 
-            let match;
 
-            match = dateStr.match(
-                /^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})(?:\s*,?\s*(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/
+            /* YYYY-MM-DD / YYYY/MM/DD */
+
+            let match = dateStr.match(
+                /^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/
             );
 
             if (match) {
 
                 let year = parseInt(match[1], 10);
-                let month = parseInt(match[2], 10);
-                let day = parseInt(match[3], 10);
-
-                let hour = parseInt(match[4] || '0', 10);
-                let minute = parseInt(match[5] || '0', 10);
-                let second = parseInt(match[6] || '0', 10);
+                const month = parseInt(match[2], 10);
+                const day = parseInt(match[3], 10);
 
                 if (year > 2400) {
                     year -= 543;
@@ -450,35 +880,28 @@
                 const date = new Date(
                     year,
                     month - 1,
-                    day,
-                    hour,
-                    minute,
-                    second
+                    day
                 );
 
-                if (
-                    date.getFullYear() === year &&
-                    date.getMonth() === month - 1 &&
-                    date.getDate() === day
-                ) {
-                    return date;
-                }
+                return isNaN(date.getTime())
+                    ? null
+                    : date;
+
             }
 
 
+            /* DD/MM/YYYY / DD-MM-YYYY */
+
             match = dateStr.match(
-                /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s*,?\s*(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?)?$/
+                /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/
             );
 
             if (match) {
 
-                let day = parseInt(match[1], 10);
-                let month = parseInt(match[2], 10);
-                let year = parseInt(match[3], 10);
+                const day = parseInt(match[1], 10);
+                const month = parseInt(match[2], 10);
 
-                let hour = parseInt(match[4] || '0', 10);
-                let minute = parseInt(match[5] || '0', 10);
-                let second = parseInt(match[6] || '0', 10);
+                let year = parseInt(match[3], 10);
 
                 if (year > 2400) {
                     year -= 543;
@@ -487,227 +910,147 @@
                 const date = new Date(
                     year,
                     month - 1,
-                    day,
-                    hour,
-                    minute,
-                    second
+                    day
                 );
 
-                if (
-                    date.getFullYear() === year &&
-                    date.getMonth() === month - 1 &&
-                    date.getDate() === day
-                ) {
-                    return date;
-                }
+                return isNaN(date.getTime())
+                    ? null
+                    : date;
+
             }
 
 
-            const directDate = new Date(dateStr);
+            const fallback = new Date(dateStr);
 
-            if (!isNaN(directDate.getTime())) {
-                return directDate;
-            }
+            return isNaN(fallback.getTime())
+                ? null
+                : fallback;
 
-            return null;
         }
 
 
+        /* =====================================================
+           DATE RANGE
+        ===================================================== */
+
         function createStartDate(value) {
 
-            if (!value) return null;
+            if (!value) {
+                return null;
+            }
 
-            const [year, month, day] = value
-                .split('-')
-                .map(Number);
+            const parts = value.split('-');
+
+            if (parts.length !== 3) {
+                return null;
+            }
 
             return new Date(
-                year,
-                month - 1,
-                day,
-                0,
-                0,
-                0,
-                0
+                parseInt(parts[0], 10),
+                parseInt(parts[1], 10) - 1,
+                parseInt(parts[2], 10),
+                0, 0, 0, 0
             );
+
         }
 
 
         function createEndDate(value) {
 
-            if (!value) return null;
+            if (!value) {
+                return null;
+            }
 
-            const [year, month, day] = value
-                .split('-')
-                .map(Number);
+            const parts = value.split('-');
+
+            if (parts.length !== 3) {
+                return null;
+            }
 
             return new Date(
-                year,
-                month - 1,
-                day,
-                23,
-                59,
-                59,
-                999
+                parseInt(parts[0], 10),
+                parseInt(parts[1], 10) - 1,
+                parseInt(parts[2], 10),
+                23, 59, 59, 999
             );
+
         }
 
 
-        function isDateInRange(date, startDate, endDate) {
+        function isDateInRange(
+            date,
+            startDate,
+            endDate
+        ) {
 
-            if (!date || isNaN(date.getTime())) {
+            if (!date) {
                 return false;
             }
 
-            const time = date.getTime();
-
-            if (startDate && time < startDate.getTime()) {
+            if (
+                startDate &&
+                date < startDate
+            ) {
                 return false;
             }
 
-            if (endDate && time > endDate.getTime()) {
+            if (
+                endDate &&
+                date > endDate
+            ) {
                 return false;
             }
 
             return true;
+
         }
 
 
-        async function fetchInitialData() {
-
-            try {
-
-                document.getElementById('v1').innerText = '...';
-                document.getElementById('v2').innerText = '...';
-                document.getElementById('v3').innerText = '...';
-                document.getElementById('v4').innerText = '...';
-
-                const cacheBuster = '?t=' + Date.now();
-
-                const jobsUrl =
-                    urlWorksRecords +
-                    '&t=' +
-                    Date.now();
-
-                const evalUrl =
-                    urlEvaluations +
-                    '&t=' +
-                    Date.now();
-
-                const [
-                    jobsResponse,
-                    evalResponse
-                ] = await Promise.all([
-                    fetch(jobsUrl),
-                    fetch(evalUrl)
-                ]);
-
-                if (!jobsResponse.ok) {
-                    throw new Error('ไม่สามารถโหลดข้อมูลงานซ่อมได้');
-                }
-
-                if (!evalResponse.ok) {
-                    throw new Error('ไม่สามารถโหลดข้อมูลประเมินได้');
-                }
-
-                const [
-                    jobsText,
-                    evalText
-                ] = await Promise.all([
-                    jobsResponse.text(),
-                    evalResponse.text()
-                ]);
-
-                allJobsData = parseCSV(jobsText);
-                allEvalData = parseCSV(evalText);
-
-                if (allJobsData.length === 0) {
-                    throw new Error('ไม่พบข้อมูลงานซ่อม');
-                }
-
-                applyDateFilter();
-
-            } catch (error) {
-
-                console.error(error);
-
-                document.getElementById('v1').innerText = '0';
-                document.getElementById('v2').innerText = '0';
-                document.getElementById('v3').innerText = '0.00';
-                document.getElementById('v4').innerText = '0.00';
-
-                document.getElementById('commentList').innerHTML =
-                    `<li class="list-group-item text-danger text-center py-4">
-                        ไม่สามารถโหลดข้อมูลได้
-                    </li>`;
-
-                alert(
-                    'ไม่สามารถดึงข้อมูลจาก Google Sheet ได้\n' +
-                    error.message
-                );
-            }
-        }
-
+        /* =====================================================
+           APPLY DATE FILTER
+           
+           IMPORTANT:
+           WorkRecords H = row[7]
+           ใช้ H เป็นวันที่หลักทั้งหมด
+        ===================================================== */
 
         function applyDateFilter() {
 
-            const startInput =
-                document.getElementById('dateStart').value;
-
-            const endInput =
-                document.getElementById('dateEnd').value;
-
             const startDate =
-                createStartDate(startInput);
-
-            const endDate =
-                createEndDate(endInput);
-
-
-            if (
-                startDate &&
-                endDate &&
-                startDate.getTime() > endDate.getTime()
-            ) {
-
-                alert(
-                    'วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด'
+                createStartDate(
+                    document.getElementById('dateStart').value
                 );
 
-                return;
-            }
+            const endDate =
+                createEndDate(
+                    document.getElementById('dateEnd').value
+                );
 
 
-            const filteredJobRows = [];
+            /*
+              ใช้ H / row[7] เท่านั้น
+              H ว่าง = ไม่ถูกนับ
+            */
 
-            for (let i = 1; i < allJobsData.length; i++) {
+            const filteredJobRows =
+                allJobsData.filter(row => {
 
-                const row = allJobsData[i];
+                    const workDate =
+                        parseDateString(row[7]);
 
-                if (!row || row.length === 0) {
-                    continue;
-                }
-
-                const workDateText =
-                    row[7] && row[7].trim()
-                        ? row[7]
-                        : row[0];
-
-                const workDate =
-                    parseDateString(workDateText);
-
-                if (
-                    isDateInRange(
+                    return isDateInRange(
                         workDate,
                         startDate,
                         endDate
-                    )
-                ) {
+                    );
 
-                    filteredJobRows.push(row);
-                }
-            }
+                });
 
+
+            /*
+              สถิติภาพรวม
+              ใช้ข้อมูลที่กรองด้วย H
+            */
 
             updateStatsSummary(
                 filteredJobRows,
@@ -716,6 +1059,11 @@
             );
 
 
+            /*
+              กราฟแนวโน้ม
+              ใช้ H โดยตรง
+            */
+
             updateLineChart(
                 allJobsData,
                 startDate,
@@ -723,11 +1071,41 @@
             );
 
 
+            /*
+              กราฟแท่ง
+              ใช้แถวงานที่กรองด้วย H
+            */
+
             updateBarChart(
                 filteredJobRows
             );
+
         }
 
+
+        /* =====================================================
+           CLEAR DATE FILTER
+        ===================================================== */
+
+        function clearDateFilter() {
+
+            document.getElementById('dateStart').value = '';
+            document.getElementById('dateEnd').value = '';
+
+
+            /*
+              โหลด CSV ใหม่อีกครั้ง
+              เพื่อให้ได้ข้อมูลล่าสุดจาก Google Sheets
+            */
+
+            loadData();
+
+        }
+
+
+        /* =====================================================
+           UPDATE STATS
+        ===================================================== */
 
         function updateStatsSummary(
             filteredRows,
@@ -735,182 +1113,271 @@
             endDate
         ) {
 
-            const totalJobs =
-                filteredRows.length;
+            /*
+              จำนวนงาน
+              นับจาก WorkRecords H เท่านั้น
+            */
 
-            let sumSat = 0;
-            let sumPerf = 0;
+            document.getElementById('totalJobs')
+                .textContent = filteredRows.length.toLocaleString();
 
-            let satCount = 0;
-            let perfCount = 0;
 
             let evalCount = 0;
 
-            const comments = [];
+            let satSum = 0;
+            let satCount = 0;
+
+            let perfSum = 0;
+            let perfCount = 0;
 
 
-            for (
-                let i = 1;
-                i < allEvalData.length;
-                i++
-            ) {
+            /*
+              Evaluation ใช้ Timestamp A
+              ตามโครงสร้างเดิมของระบบ
+            */
 
-                const row =
-                    allEvalData[i];
+            allEvaluationsData.forEach(row => {
 
-                if (!row || row.length < 5) {
-                    continue;
-                }
-
-                const rowDate =
+                const evalDate =
                     parseDateString(row[0]);
 
                 if (
                     !isDateInRange(
-                        rowDate,
+                        evalDate,
                         startDate,
                         endDate
                     )
                 ) {
-                    continue;
+                    return;
                 }
 
 
                 const sat =
-                    parseFloat(
-                        String(row[3] || '')
-                            .replace(',', '.')
-                    );
+                    parseFloat(row[3]);
 
                 const perf =
-                    parseFloat(
-                        String(row[4] || '')
-                            .replace(',', '.')
-                    );
+                    parseFloat(row[4]);
+
+
+                let hasScore = false;
 
 
                 if (!isNaN(sat)) {
 
-                    sumSat += sat;
+                    satSum += sat;
                     satCount++;
+                    hasScore = true;
+
                 }
 
 
                 if (!isNaN(perf)) {
 
-                    sumPerf += perf;
+                    perfSum += perf;
                     perfCount++;
+                    hasScore = true;
+
                 }
 
 
-                if (
-                    !isNaN(sat) ||
-                    !isNaN(perf)
-                ) {
-
+                if (hasScore) {
                     evalCount++;
+                }
+
+            });
+
+
+            document.getElementById('totalEvals')
+                .textContent =
+                evalCount.toLocaleString();
+
+
+            document.getElementById('avgSat')
+                .textContent =
+                satCount > 0
+                    ? (satSum / satCount).toFixed(2)
+                    : '0.00';
+
+
+            document.getElementById('avgPerf')
+                .textContent =
+                perfCount > 0
+                    ? (perfSum / perfCount).toFixed(2)
+                    : '0.00';
+
+
+            /*
+              Comments
+              แสดง 20 รายการล่าสุด
+            */
+
+            const comments = [];
+
+
+            allEvaluationsData.forEach(row => {
+
+                const evalDate =
+                    parseDateString(row[0]);
+
+
+                if (
+                    !isDateInRange(
+                        evalDate,
+                        startDate,
+                        endDate
+                    )
+                ) {
+                    return;
                 }
 
 
                 const comment =
                     row[5]
-                        ? String(row[5]).trim()
+                        ? row[5].toString().trim()
                         : '';
 
 
-                if (comment !== '') {
-
-                    comments.push({
-                        text: comment,
-                        date: rowDate
-                            ? rowDate.toLocaleDateString(
-                                'th-TH'
-                            )
-                            : ''
-                    });
+                if (!comment) {
+                    return;
                 }
-            }
+
+
+                comments.push({
+
+                    date: evalDate,
+
+                    userType:
+                        row[2]
+                            ? row[2].toString().trim()
+                            : '',
+
+                    text: comment
+
+                });
+
+            });
 
 
             comments.sort(
-                (a, b) => {
-
-                    const da =
-                        parseDateString(a.date);
-
-                    const db =
-                        parseDateString(b.date);
-
-                    if (!da || !db) return 0;
-
-                    return db - da;
-                }
+                (a, b) =>
+                    (b.date ? b.date.getTime() : 0) -
+                    (a.date ? a.date.getTime() : 0)
             );
 
 
-            document.getElementById('v1').innerText =
-                totalJobs.toLocaleString('th-TH');
+            renderComments(
+                comments.slice(0, 20)
+            );
 
-
-            document.getElementById('v2').innerText =
-                evalCount.toLocaleString('th-TH');
-
-
-            document.getElementById('v3').innerText =
-                satCount > 0
-                    ? (sumSat / satCount).toFixed(2)
-                    : '0.00';
-
-
-            document.getElementById('v4').innerText =
-                perfCount > 0
-                    ? (sumPerf / perfCount).toFixed(2)
-                    : '0.00';
-
-
-            let commentHtml = '';
-
-            if (comments.length === 0) {
-
-                commentHtml =
-                    `<li class="list-group-item text-muted text-center py-4">
-                        ไม่มีข้อเสนอแนะ
-                    </li>`;
-
-            } else {
-
-                comments
-                    .slice(0, 10)
-                    .forEach(comment => {
-
-                        const safeText =
-                            comment.text
-                                .replace(/&/g, '&amp;')
-                                .replace(/</g, '&lt;')
-                                .replace(/>/g, '&gt;')
-                                .replace(/"/g, '&quot;')
-                                .replace(/'/g, '&#039;');
-
-                        commentHtml +=
-                            `<li class="list-group-item py-3">
-                                <div class="fw-bold text-dark">
-                                    "${safeText}"
-                                </div>
-                                <small class="text-muted">
-                                    เมื่อ ${comment.date}
-                                </small>
-                            </li>`;
-                    });
-            }
-
-
-            document.getElementById('commentList').innerHTML =
-                commentHtml;
         }
 
 
+        /* =====================================================
+           RENDER COMMENTS
+        ===================================================== */
+
+        function renderComments(comments) {
+
+            const container =
+                document.getElementById('commentsList');
+
+
+            if (!comments.length) {
+
+                container.innerHTML =
+                    '<div class="text-muted">' +
+                    'ยังไม่มีข้อเสนอแนะในช่วงเวลาที่เลือก' +
+                    '</div>';
+
+                return;
+
+            }
+
+
+            container.innerHTML =
+                comments.map(item => {
+
+                    const dateText =
+                        item.date
+                            ? item.date.toLocaleDateString(
+                                'th-TH',
+                                {
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                }
+                            )
+                            : '-';
+
+
+                    return `
+
+          <div class="comment-item">
+
+            <div class="comment-date">
+
+              <i class="fa-regular fa-calendar me-1"></i>
+
+              ${dateText}
+
+            </div>
+
+
+            ${item.userType
+                            ? `
+                  <div class="comment-type">
+
+                    <i class="fa-solid fa-user me-1"></i>
+
+                    ${escapeHtml(item.userType)}
+
+                  </div>
+                `
+                            : ''
+                        }
+
+
+            <div class="comment-text">
+
+              <i class="fa-regular fa-comment-dots me-1 text-secondary"></i>
+
+              ${escapeHtml(item.text)}
+
+            </div>
+
+          </div>
+
+        `;
+
+                }).join('');
+
+        }
+
+
+        /* =====================================================
+           HTML ESCAPE
+        ===================================================== */
+
+        function escapeHtml(value) {
+
+            return value
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+
+        }
+
+
+        /* =====================================================
+           LINE CHART
+           
+           WorkRecords H / row[7] ONLY
+        ===================================================== */
+
         function updateLineChart(
-            allRows,
+            rows,
             startDate,
             endDate
         ) {
@@ -918,103 +1385,47 @@
             const dailyCounts = {};
 
 
-            for (
-                let i = 1;
-                i < allRows.length;
-                i++
-            ) {
+            rows.forEach(row => {
 
-                const row =
-                    allRows[i];
+                /*
+                  สำคัญ:
+                  ใช้ H เท่านั้น
+                  ไม่ fallback ไป A
+                */
 
-                if (!row) continue;
-
-
-                const dateText =
-                    row[7] &&
-                        row[7].trim() !== ''
-                        ? row[7]
-                        : row[0];
-
-
-                if (!dateText) continue;
-
-
-                const date =
-                    parseDateString(dateText);
-
-
-                if (!date || isNaN(date.getTime())) {
-                    continue;
-                }
+                const workDate =
+                    parseDateString(row[7]);
 
 
                 if (
                     !isDateInRange(
-                        date,
+                        workDate,
                         startDate,
                         endDate
                     )
                 ) {
-                    continue;
+                    return;
                 }
 
 
-                const dateOnly =
+                const key =
                     new Date(
-                        date.getFullYear(),
-                        date.getMonth(),
-                        date.getDate()
-                    );
+                        workDate.getFullYear(),
+                        workDate.getMonth(),
+                        workDate.getDate()
+                    ).getTime();
 
 
-                const timeKey =
-                    dateOnly.getTime();
+                dailyCounts[key] =
+                    (dailyCounts[key] || 0) + 1;
+
+            });
 
 
-                if (!dailyCounts[timeKey]) {
-                    dailyCounts[timeKey] = 0;
-                }
-
-
-                dailyCounts[timeKey]++;
-            }
-
-
-            let dates =
+            const timestamps =
                 Object.keys(dailyCounts)
                     .map(Number)
                     .sort((a, b) => a - b);
-
-
-            if (dates.length === 0) {
-
-                if (lineChartInstance) {
-                    lineChartInstance.destroy();
-                    lineChartInstance = null;
-                }
-
-                lineChartInstance =
-                    new Chart(
-                        document.getElementById('lineChart'),
-                        {
-                            type: 'line',
-                            data: {
-                                labels: [],
-                                datasets: [{
-                                    label: 'จำนวนงานซ่อมตามวันที่ปฏิบัติงาน',
-                                    data: []
-                                }]
-                            },
-                            options: {
-                                responsive: true,
-                                maintainAspectRatio: false
-                            }
-                        }
-                    );
-
-                return;
-            }
 
 
             let chartStart;
@@ -1024,19 +1435,16 @@
             if (startDate) {
 
                 chartStart =
-                    new Date(startDate);
+                    new Date(
+                        startDate.getFullYear(),
+                        startDate.getMonth(),
+                        startDate.getDate()
+                    );
 
-                chartStart.setHours(
-                    0,
-                    0,
-                    0,
-                    0
-                );
-
-            } else {
+            } else if (timestamps.length) {
 
                 chartStart =
-                    new Date(dates[0]);
+                    new Date(timestamps[0]);
 
             }
 
@@ -1044,337 +1452,411 @@
             if (endDate) {
 
                 chartEnd =
-                    new Date(endDate);
+                    new Date(
+                        endDate.getFullYear(),
+                        endDate.getMonth(),
+                        endDate.getDate()
+                    );
 
-                chartEnd.setHours(
-                    23,
-                    59,
-                    59,
-                    999
-                );
-
-            } else {
+            } else if (timestamps.length) {
 
                 chartEnd =
                     new Date(
-                        dates[dates.length - 1]
+                        timestamps[timestamps.length - 1]
                     );
 
-                chartEnd.setHours(
-                    23,
-                    59,
-                    59,
-                    999
-                );
             }
-
-
-            const thaiMonths = [
-                'ม.ค.',
-                'ก.พ.',
-                'มี.ค.',
-                'เม.ย.',
-                'พ.ค.',
-                'มิ.ย.',
-                'ก.ค.',
-                'ส.ค.',
-                'ก.ย.',
-                'ต.ค.',
-                'พ.ย.',
-                'ธ.ค.'
-            ];
 
 
             const labels = [];
             const values = [];
 
 
-            const currentDate =
-                new Date(chartStart);
-
-
-            currentDate.setHours(
-                0,
-                0,
-                0,
-                0
-            );
-
-
-            while (
-                currentDate.getTime() <=
-                chartEnd.getTime()
+            if (
+                chartStart &&
+                chartEnd &&
+                chartStart <= chartEnd
             ) {
 
-                const timeKey =
-                    new Date(
-                        currentDate.getFullYear(),
-                        currentDate.getMonth(),
-                        currentDate.getDate()
-                    ).getTime();
+                const current =
+                    new Date(chartStart);
 
 
-                labels.push(
-                    `${currentDate.getDate()} ${thaiMonths[currentDate.getMonth()]} ${currentDate.getFullYear() + 543}`
-                );
+                while (current <= chartEnd) {
+
+                    const timestamp =
+                        new Date(
+                            current.getFullYear(),
+                            current.getMonth(),
+                            current.getDate()
+                        ).getTime();
 
 
-                values.push(
-                    dailyCounts[timeKey] || 0
-                );
+                    labels.push(
+                        current.toLocaleDateString(
+                            'th-TH',
+                            {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric'
+                            }
+                        )
+                    );
 
 
-                currentDate.setDate(
-                    currentDate.getDate() + 1
-                );
+                    values.push(
+                        dailyCounts[timestamp] || 0
+                    );
+
+
+                    current.setDate(
+                        current.getDate() + 1
+                    );
+
+                }
+
             }
 
 
             if (lineChartInstance) {
+
                 lineChartInstance.destroy();
+
             }
+
+
+            const ctx =
+                document
+                    .getElementById('lineChart')
+                    .getContext('2d');
 
 
             lineChartInstance =
-                new Chart(
-                    document.getElementById('lineChart'),
-                    {
-                        type: 'line',
+                new Chart(ctx, {
 
-                        data: {
-                            labels: labels,
+                    type: 'line',
 
-                            datasets: [{
-                                label:
-                                    'จำนวนงานซ่อมตามวันที่ปฏิบัติงาน',
+                    data: {
 
-                                data: values,
+                        labels: labels,
 
-                                borderColor:
-                                    '#4f46e5',
+                        datasets: [{
 
-                                backgroundColor:
-                                    'rgba(79, 70, 229, 0.1)',
+                            label: 'จำนวนงาน',
 
-                                tension: 0.3,
+                            data: values,
 
-                                fill: true,
+                            borderWidth: 2,
 
-                                pointRadius: 4,
+                            tension: 0.25,
 
-                                pointHoverRadius: 6,
+                            fill: false,
 
-                                pointBackgroundColor:
-                                    '#4f46e5',
+                            pointRadius: 3
 
-                                pointBorderColor:
-                                    '#ffffff',
+                        }]
 
-                                pointBorderWidth: 2
-                            }]
+                    },
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio: false,
+
+                        plugins: {
+
+                            legend: {
+                                display: true
+                            }
+
                         },
 
-                        options: {
+                        scales: {
 
-                            responsive: true,
+                            y: {
 
-                            maintainAspectRatio: false,
+                                beginAtZero: true,
 
-                            interaction: {
-                                intersect: false,
-                                mode: 'index'
-                            },
-
-                            scales: {
-
-                                x: {
-                                    title: {
-                                        display: true,
-                                        text: 'วันที่ปฏิบัติงาน'
-                                    },
-
-                                    ticks: {
-                                        maxRotation: 60,
-                                        minRotation: 45
-                                    }
-                                },
-
-                                y: {
-                                    beginAtZero: true,
-
-                                    title: {
-                                        display: true,
-                                        text: 'จำนวนเคส'
-                                    },
-
-                                    ticks: {
-                                        precision: 0
-                                    }
+                                ticks: {
+                                    precision: 0
                                 }
-                            },
 
-                            plugins: {
-
-                                legend: {
-                                    display: true
-                                },
-
-                                tooltip: {
-
-                                    callbacks: {
-
-                                        title:
-                                            items =>
-                                                `วันที่: ${items[0].label}`,
-
-                                        label:
-                                            context =>
-                                                ` จำนวน: ${context.parsed.y} เคส`
-                                    }
-                                }
                             }
+
                         }
+
                     }
-                );
+
+                });
+
         }
 
 
-        function updateBarChart(
-            filteredRows
-        ) {
+        /* =====================================================
+           BAR CHART
+           
+           Date = H / row[7]
+           Category = E / row[4]
+        ===================================================== */
 
-            const categoryCounts = {};
+        function updateBarChart(rows) {
+
+            const categories = {};
 
 
-            for (
-                let i = 0;
-                i < filteredRows.length;
-                i++
-            ) {
-
-                const row =
-                    filteredRows[i];
-
-                if (!row) continue;
-
+            rows.forEach(row => {
 
                 const category =
                     row[4]
-                        ? String(row[4]).trim()
-                        : '';
+                        ? row[4].toString().trim()
+                        : 'ไม่ระบุ';
 
 
-                if (!category) continue;
+                categories[category] =
+                    (categories[category] || 0) + 1;
+
+            });
 
 
-                categoryCounts[category] =
-                    (categoryCounts[category] || 0) + 1;
-            }
-
-
-            const categories =
-                Object.keys(categoryCounts)
-                    .sort(
-                        (a, b) =>
-                            categoryCounts[b] -
-                            categoryCounts[a]
-                    );
+            const labels =
+                Object.keys(categories);
 
 
             const values =
-                categories.map(
-                    category =>
-                        categoryCounts[category]
+                labels.map(
+                    label => categories[label]
                 );
 
 
             if (barChartInstance) {
+
                 barChartInstance.destroy();
+
             }
 
 
+            const ctx =
+                document
+                    .getElementById('barChart')
+                    .getContext('2d');
+
+
             barChartInstance =
-                new Chart(
-                    document.getElementById('barChart'),
-                    {
-                        type: 'bar',
+                new Chart(ctx, {
 
-                        data: {
+                    type: 'bar',
 
-                            labels: categories,
+                    data: {
 
-                            datasets: [{
-                                label:
-                                    'จำนวนงานแยกตามประเภท',
+                        labels: labels,
 
-                                data: values,
+                        datasets: [{
 
-                                backgroundColor: [
-                                    '#0d6efd',
-                                    '#6f42c1',
-                                    '#198754',
-                                    '#ffc107',
-                                    '#fd7e14',
-                                    '#0dcaf0',
-                                    '#dc3545',
-                                    '#20c997',
-                                    '#6610f2',
-                                    '#d63384'
-                                ]
-                            }]
+                            label: 'จำนวนงาน',
+
+                            data: values,
+
+                            borderWidth: 1
+
+                        }]
+
+                    },
+
+                    options: {
+
+                        responsive: true,
+
+                        maintainAspectRatio: false,
+
+                        plugins: {
+
+                            legend: {
+                                display: true
+                            }
+
                         },
 
-                        options: {
+                        scales: {
 
-                            responsive: true,
+                            y: {
 
-                            maintainAspectRatio: false,
+                                beginAtZero: true,
 
-                            scales: {
-
-                                x: {
-                                    ticks: {
-                                        autoSkip: false,
-                                        maxRotation: 45,
-                                        minRotation: 0
-                                    }
-                                },
-
-                                y: {
-
-                                    beginAtZero: true,
-
-                                    ticks: {
-                                        precision: 0
-                                    }
+                                ticks: {
+                                    precision: 0
                                 }
-                            },
 
-                            plugins: {
-
-                                legend: {
-                                    display: true
-                                },
-
-                                tooltip: {
-
-                                    callbacks: {
-
-                                        label:
-                                            context =>
-                                                ` ${context.parsed.y} งาน`
-                                    }
-                                }
                             }
+
                         }
+
                     }
-                );
+
+                });
+
         }
 
 
-        window.addEventListener(
-            'load',
-            fetchInitialData
+        /* =====================================================
+           LOAD DATA
+        ===================================================== */
+
+        async function loadData() {
+
+            document
+                .getElementById('loading')
+                .style.display = 'flex';
+
+
+            try {
+
+                /*
+                  Cache Busting
+                */
+
+                const jobsUrl =
+                    urlWorksRecords +
+                    '&t=' +
+                    Date.now();
+
+
+                const evalUrl =
+                    urlEvaluations +
+                    '&t=' +
+                    Date.now();
+
+
+                const [
+                    jobsResponse,
+                    evalResponse
+                ] = await Promise.all([
+
+                    fetch(
+                        jobsUrl,
+                        {
+                            cache: 'no-store'
+                        }
+                    ),
+
+                    fetch(
+                        evalUrl,
+                        {
+                            cache: 'no-store'
+                        }
+                    )
+
+                ]);
+
+
+                if (!jobsResponse.ok) {
+                    throw new Error(
+                        'ไม่สามารถโหลด WorkRecords'
+                    );
+                }
+
+
+                if (!evalResponse.ok) {
+                    throw new Error(
+                        'ไม่สามารถโหลด Evaluations'
+                    );
+                }
+
+
+                const [
+                    jobsText,
+                    evalText
+                ] = await Promise.all([
+
+                    jobsResponse.text(),
+                    evalResponse.text()
+
+                ]);
+
+
+                const jobsRows =
+                    parseCSV(jobsText);
+
+
+                const evalRows =
+                    parseCSV(evalText);
+
+
+                /*
+                  ตัด Header
+                */
+
+                allJobsData =
+                    jobsRows.slice(1)
+                        .filter(row => row.length > 1);
+
+
+                allEvaluationsData =
+                    evalRows.slice(1)
+                        .filter(row => row.length > 1);
+
+
+                /*
+                  Clear filter ทุกครั้งที่โหลดใหม่
+                  เพื่อให้เห็นข้อมูลล่าสุดทั้งหมด
+                */
+
+                document.getElementById(
+                    'dateStart'
+                ).value = '';
+
+                document.getElementById(
+                    'dateEnd'
+                ).value = '';
+
+
+                /*
+                  แสดงข้อมูลทั้งหมด
+                */
+
+                applyDateFilter();
+
+
+            } catch (error) {
+
+                console.error(error);
+
+                document.getElementById(
+                    'commentsList'
+                ).innerHTML =
+
+                    '<div class="alert alert-danger">' +
+
+                    '<i class="fa-solid fa-triangle-exclamation me-2"></i>' +
+
+                    'เกิดข้อผิดพลาดในการโหลดข้อมูล: ' +
+
+                    escapeHtml(error.message) +
+
+                    '</div>';
+
+            } finally {
+
+                document
+                    .getElementById('loading')
+                    .style.display = 'none';
+
+            }
+
+        }
+
+
+        /* =====================================================
+           INITIAL LOAD
+        ===================================================== */
+
+        document.addEventListener(
+            'DOMContentLoaded',
+            function () {
+
+                loadData();
+
+            }
         );
 
     </script>
