@@ -252,7 +252,7 @@
                 for (let i = 1; i < allJobsData.length; i++) {
                     let row = allJobsData[i];
                     if (row.length > 1) {
-                        let rowDateStr = row[0];
+                        let rowDateStr = row[7];
                         let rowDate = parseDateString(rowDateStr);
 
                         let isValidDate = false;
@@ -345,7 +345,7 @@
 
                 for (let i = 0; i < filteredRows.length; i++) {
                     let row = filteredRows[i];
-                    let d = parseDateString(row[0]);
+                    let d = parseDateString(row[7]);
                     if (!d || isNaN(d.getTime())) continue;
 
                     let dateOnly = new Date(d.getFullYear(), d.getMonth(), d.getDate());
