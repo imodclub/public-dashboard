@@ -187,33 +187,50 @@
         }
 
         function parseDateString(dateStr) {
-            if (!dateStr) return null;
-            dateStr = dateStr.toString().trim();
+                if (!dateStr) return null;
+                dateStr = dateStr.toString().trim();
 
-            try {
-                let mainParts = dateStr.split(',');
-                let datePart = mainParts[0].trim();
-                let timePart = mainParts.length > 1 ? mainParts[1].trim() : "00:00:00";
-
-                let dParts = datePart.split('/');
-                if (dParts.length === 3) {
-                    let day = parseInt(dParts[0], 10);
-                    let month = parseInt(dParts[1], 10) - 1;
-                    let year = parseInt(dParts[2], 10);
-
-                    let tParts = timePart.split(':');
-                    let hr = tParts.length > 0 ? parseInt(tParts[0], 10) : 0;
-                    let min = tParts.length > 1 ? parseInt(tParts[1], 10) : 0;
-                    let sec = tParts.length > 2 ? parseInt(tParts[2], 10) : 0;
-
-                    let d = new Date(year, month, day, hr, min, sec);
-                    if (!isNaN(d.getTime())) return d;
+                // 1. ลองใช้ Date constructor ตรงๆ ก่อน (รองรับ ISO format เช่น 2026-07-02T... หรือ 2026-07-02 07:49:20)
+                let directDate = new Date(dateStr);
+                if (!isNaN(directDate.getTime())) {
+                    return directDate;
                 }
-            } catch (e) { }
 
-            let fallbackDate = new Date(dateStr);
-            return isNaN(fallbackDate.getTime()) ? null : fallbackDate;
-        }
+                // 2. รองรับรูปแบบ DD/MM/YYYY หรือ DD-MM-YYYY พร้อมเวลา
+                try {
+                    let mainParts = dateStr.split(',');
+                    let datePart = mainParts[0].trim();
+                    let timePart = mainParts.length > 1 ? mainParts[1].trim() : "00:00:00";
+
+                    let dParts = datePart.split(/[\/\-]/); // รองรับทั้งเครื่องหมาย / และ -
+                    if (dParts.length === 3) {
+                        let day, month, year;
+                        // ตรวจสอบว่าเป็นปีขึ้นต้นหรือวันขึ้นต้น (YYYY-MM-DD vs DD-MM-YYYY)
+                        if (dParts[0].length === 4) {
+                            year = parseInt(dParts[0], 10);
+                            month = parseInt(dParts[1], 10) - 1;
+                            day = parseInt(dParts[2], 10);
+                        } else {
+                            day = parseInt(dParts[0], 10);
+                            month = parseInt(dParts[1], 10) - 1;
+                            year = parseInt(dParts[2], 10);
+                        }
+
+                        // แปลงปีพุทธศักราชเป็นคริสต์ศักราชอัตโนมัติหากเกิน 2400
+                        if (year > 2400) year -= 543;
+
+                        let tParts = timePart.split(':');
+                        let hr = tParts.length > 0 ? parseInt(tParts[0], 10) : 0;
+                        let min = tParts.length > 1 ? parseInt(tParts[1], 10) : 0;
+                        let sec = tParts.length > 2 ? parseInt(tParts[2], 10) : 0;
+
+                        let d = new Date(year, month, day, hr, min, sec);
+                        if (!isNaN(d.getTime())) return d;
+                    }
+                } catch (e) { }
+
+                return null;
+            }
 
         async function fetchInitialData() {
             try {
